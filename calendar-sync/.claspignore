@@ -1,0 +1,10 @@
+# Don't push these to Apps Script
+.git/
+.gitignore
+.claspignore
+.clasp.json
+.DS_Store
+README.md
+LICENSE
+calendar-sync/
+node_modules/

@@ -1,2 +1,282 @@
-# calendar-sync
-Google Workspace add-on for synchronizing events between Google Calendars
+# Calendar Sync
+
+A Google Workspace Add-on that keeps your free/busy time in sync across multiple Google Calendars — without sharing event details.
+
+## What it does
+
+When you work across multiple Google accounts (personal, work, client), attendees can't see your real availability on your other calendars. Calendar Sync solves this by reading events from your secondary calendars and creating private **"Busy [domain]"** blocks on your primary calendar automatically.
+
+**Key behaviours:**
+
+- **One-way, privacy-preserving sync** — only the time slot is copied. Titles, descriptions, locations, and attendees are never shared.
+- **Incremental sync** — uses Google Calendar sync tokens so only changed events are processed on each run.
+- **Automatic deduplication** — duplicate mirror events are detected and removed.
+- **Runs on a schedule** — a time-based trigger fires every hour, no manual action needed.
+- **Configurable sync window** — choose how many days in the past and future to keep in sync (default: 7 days each way).
+- **Up to 10 calendars** supported.
+
+### How events appear
+
+| Source calendar event | What appears on your primary calendar |
+|---|---|
+| "Team standup" (work) | "Busy [yourcompany.com]" |
+| "Doctor appointment" (personal) | "Busy [gmail.com]" |
+| All-day event | All-day "Busy" block |
+| Recurring event | Recurring "Busy" block |
+| Deleted event | Mirror is removed |
+
+## Project structure
+
+| File | Purpose |
+|---|---|
+| `Code.js` | Add-on entry points (`buildHomepage`, `runSync`, etc.) |
+| `Constants.js` | Property keys and default values |
+| `Settings.js` | Read/write user properties |
+| `Triggers.js` | Create and manage the hourly time trigger |
+| `Cards.js` | Build the setup and status UI cards |
+| `Handlers.js` | Card action callbacks |
+| `Sync.js` | Core sync engine — diff, create, update, delete mirrors |
+| `Cleanup.js` | Bulk-remove all mirror events |
+| `Utils.js` | Shared utility functions |
+| `appsscript.json` | Apps Script manifest (scopes, runtime, add-on config) |
+
+## Quick start: install & test
+
+Follow these steps in order to go from a fresh clone to a running, verified sync.
+
+### Step 1 — Install clasp
+
+```bash
+npm install -g @google/clasp
+```
+
+Enable the Apps Script API for your account (one-time):
+[script.google.com/home/usersettings](https://script.google.com/home/usersettings) → turn on **Google Apps Script API**.
+
+### Step 2 — Authenticate
+
+```bash
+clasp login
+```
+
+A browser window opens; sign in with the Google account that owns the target calendar. Credentials are stored at `~/.clasprc.json`.
+
+### Step 3 — Create an Apps Script project
+
+If you don't have one yet:
+
+```bash
+clasp create --title "Calendar Sync" --type standalone
+```
+
+This creates a new script and writes `.clasp.json` locally. If you already have a project, skip to Step 4.
+
+### Step 4 — Configure `.clasp.json`
+
+`.clasp.json` is gitignored — create it manually in the `calendar-sync/` directory if it doesn't exist:
+
+```json
+{
+  "scriptId": "<YOUR_SCRIPT_ID>",
+  "rootDir": "",
+  "scriptExtensions": [".js", ".gs"],
+  "htmlExtensions": [".html"],
+  "jsonExtensions": [".json"],
+  "filePushOrder": [],
+  "skipSubdirectories": false
+}
+```
+
+Find your script ID: Apps Script editor → **Project Settings** (gear icon) → **Script ID**.
+
+### Step 5 — Push the code
+
+```bash
+clasp push
+```
+
+Verify the upload:
+
+```bash
+clasp status   # shows which local files are tracked
+clasp open     # opens the project in the browser editor
+```
+
+### Step 6 — Enable the Calendar Advanced Service
+
+In the Apps Script editor: **Services** (+ icon in the left sidebar) → find **Google Calendar API** → click **Add**.
+
+This is required for `Calendar.Events.list/insert/update/remove` calls to work.
+
+### Step 7 — Grant OAuth permissions
+
+In the editor, select `testAuth` from the function dropdown and click **Run**. You will be prompted to grant permissions. After accepting, the execution log should show:
+
+```
+Auth OK: you@yourdomain.com
+```
+
+If you see a scope error, re-check Step 6.
+
+### Step 8 — Dry-run the sync (no writes)
+
+Before touching any real calendar data, verify the sync logic by pasting this into the editor and running it:
+
+```js
+function testDryRun() {
+  syncAll_(true, true); // forceFullSync=true, dryRun=true
+}
+```
+
+The execution log will show `CREATE mirror`, `UPDATE mirror`, or `DELETE mirror` lines for every event that would be touched — **nothing is written**. If you see no output, confirm at least 2 calendars are configured in settings.
+
+### Step 9 — Deploy as a test add-on
+
+In the Apps Script editor:
+
+1. **Deploy** → **Test deployments** → **Install**
+2. Open [Google Calendar](https://calendar.google.com) — the **Calendar Sync** panel appears in the right sidebar.
+3. Enter your calendar emails (Calendar 1 = primary), set the sync window, and click **Save & Start Sync**.
+
+### Step 10 — Verify the sync
+
+After saving settings, a full sync runs immediately. Check:
+
+- **Execution log** (`clasp logs` or View → Logs in editor): should show `Synced <calId> → 1 calendar(s)` for each secondary calendar.
+- **Primary calendar**: events from secondary calendars appear as **"Busy [domain]"** blocks with no titles, descriptions, or attendees.
+- **Status card**: shows sync as active and a "Last synced: Just now" timestamp.
+
+Run a quick incremental sync manually from the status card or by running `runSync()` in the editor.
+
+---
+
+## Local development with clasp
+
+[clasp](https://github.com/google/clasp) lets you edit Apps Script projects locally and push changes from the command line.
+
+### 1. Install clasp
+
+```bash
+npm install -g @google/clasp
+```
+
+### 2. Log in
+
+```bash
+clasp login
+```
+
+This opens a browser to authenticate with your Google account. Credentials are saved to `~/.clasprc.json`.
+
+### 3. Create `.clasp.json`
+
+`.clasp.json` is **not committed** (it contains your personal script ID). Create it in the `calendar-sync/` directory:
+
+```json
+{
+  "scriptId": "<YOUR_SCRIPT_ID>",
+  "rootDir": "",
+  "scriptExtensions": [".js", ".gs"],
+  "htmlExtensions": [".html"],
+  "jsonExtensions": [".json"],
+  "filePushOrder": [],
+  "skipSubdirectories": false
+}
+```
+
+To find your script ID: open the Apps Script project → **Project Settings** → copy the **Script ID**.
+
+### 4. Enable the Apps Script API
+
+Go to [script.google.com/home/usersettings](https://script.google.com/home/usersettings) and turn on **Google Apps Script API**.
+
+### 5. Common clasp commands
+
+```bash
+# Push local files to Apps Script
+clasp push
+
+# Pull remote changes down to local
+clasp pull
+
+# Open the project in the browser editor
+clasp open
+
+# Watch for changes and push automatically
+clasp push --watch
+
+# List project files
+clasp status
+```
+
+## First-time setup (add-on)
+
+1. Push the code with `clasp push`.
+2. In the Apps Script editor, run `testAuth` once to trigger the OAuth consent screen and grant required permissions.
+3. Deploy the project as a **Google Workspace Add-on** (Apps Script editor → Deploy → Test deployments, or a versioned deployment).
+4. Open Google Calendar — the **Calendar Sync** panel appears in the right sidebar.
+5. Enter your calendar email addresses (Calendar 1 is your primary account; add secondary calendars below).
+6. Set the sync window and click **Save & Start Sync**.
+
+The add-on creates an hourly trigger. The status card shows the last sync time and lets you pause, resume, or run a full resync.
+
+## Required OAuth scopes
+
+| Scope | Why |
+|---|---|
+| `userinfo.email` | Pre-fill Calendar 1 with your email |
+| `calendar.calendarlist.readonly` | List calendars for validation |
+| `calendar.events` | Read source events, write/delete mirror events |
+| `calendar.addons.execute` | Required for Workspace Add-ons |
+| `script.scriptapp` | Create and manage the time-based trigger |
+
+## Utility functions (run from Apps Script editor)
+
+| Function | What it does |
+|---|---|
+| `testAuth()` | Verifies auth scopes are granted; logs your email |
+| `deleteAllTriggers()` | Removes all project triggers (use to fully stop sync) |
+
+## Testing
+
+Apps Script has no built-in test runner. Testing is done manually from the script editor's **Run** menu and **Execution log** (View → Logs, or `Cmd+Enter`).
+
+### Smoke tests (run from the Apps Script editor)
+
+| Function to run | What to check in the log |
+|---|---|
+| `testAuth()` | Logs your email and confirms all OAuth scopes are granted |
+| `runSync()` | Logs `Synced <calId> → N calendar(s)` for each secondary calendar |
+| `deleteAllTriggers()` | Logs "All triggers deleted" — use to fully reset trigger state |
+| `cleanupAllMirrors()` | Logs "Removed N mirrors from <calId>" — safe to run repeatedly |
+
+### Dry-run a full sync (no writes)
+
+The sync engine accepts a `dryRun` flag. To inspect what *would* happen without creating or deleting any events, paste this into the editor and run it:
+
+```js
+function testDryRun() {
+  syncAll_(true, true); // forceFullSync=true, dryRun=true
+}
+```
+
+The execution log will show `CREATE mirror`, `UPDATE mirror`, and `DELETE mirror` entries for every event that would be touched — without making any actual changes.
+
+### Verify mirror events
+
+After a real sync, open the primary calendar and check:
+
+- Events from secondary calendars appear as **"Busy [domain]"** blocks
+- Mirror events have no title leak, no description, no attendees
+- Deleting an event on the secondary calendar causes its mirror to disappear on the next hourly run (or after a manual `runSync()`)
+
+### Incremental vs. full sync
+
+- `runSync()` — incremental (uses sync tokens, only processes changes since last run)
+- `syncAll_(true, false)` — full resync (ignores tokens, re-reads the entire sync window)
+
+Run a full resync after changing the sync window or adding a new calendar.
+
+## Privacy notes
+
+Mirror events use private extended properties (`cb_source_id`, `cb_by`, `cb_sync_group`) to track which events belong to this add-on. These properties are never visible to calendar guests. The sync group UUID is unique per user installation, preventing cross-user collisions.

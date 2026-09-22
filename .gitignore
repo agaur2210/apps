@@ -428,5 +428,8 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# macOS
+.DS_Store
+
 # Google Apps Script
 .clasp.json

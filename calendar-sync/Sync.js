@@ -40,6 +40,8 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
   }
 
   let pageToken, nextToken;
+  const processedIds   = new Set();
+  const pendingMasters = new Set();
 
   do {
     if (pageToken) params.pageToken = pageToken;
@@ -56,29 +58,63 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
       throw err;
     }
 
-    (resp.items || []).forEach(ev =>
-      processEvent_(ev, dstIds, syncGroup, label, dryRun)
-    );
+    (resp.items || []).forEach(ev => {
+      if (!ev.id) return;
+      const isInstance = ev.recurringEventId || /_\d{8}T/.test(ev.id);
+      if (isInstance) {
+        const masterId = ev.recurringEventId || ev.id.replace(/_\d{8}T\w+$/, '');
+        pendingMasters.add(masterId);
+        return;
+      }
+      processedIds.add(ev.id);
+      processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays);
+    });
 
     pageToken = resp.nextPageToken;
     nextToken = resp.nextSyncToken;
 
   } while (pageToken);
 
+  // If sync token returned instances without their master, fetch and process the master now
+  pendingMasters.forEach(masterId => {
+    if (processedIds.has(masterId)) return;
+    try {
+      const master = Calendar.Events.get(srcId, masterId);
+      processEvent_(master, dstIds, syncGroup, label, dryRun, pastDays, futureDays);
+    } catch (_) {}
+  });
+
   if (nextToken && !dryRun) p.setProperty(tokenKey, nextToken);
   Logger.log('Synced ' + srcId + ' → ' + dstIds.length + ' calendar(s)');
 }
 
-function processEvent_(ev, dstIds, syncGroup, label, dryRun) {
+function processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays) {
   if (!ev.id) return;
   if (isMirror_(ev, syncGroup)) return;
   if ((ev.eventType || 'default') !== 'default') return;
   if (ev.recurringEventId) return;
   if (!ev.start || !ev.end) return;
 
-  dstIds.forEach(dstId =>
-    processMirror_(ev, dstId, syncGroup, label, dryRun)
-  );
+  const cancelled = ev.status === 'cancelled';
+  const recurring = !!(ev.recurrence && ev.recurrence.length);
+  const inWindow  = isInWindow_(ev, pastDays, futureDays);
+
+  dstIds.forEach(dstId => {
+    if (cancelled || recurring || inWindow) {
+      processMirror_(ev, dstId, syncGroup, label, dryRun);
+    } else {
+      deleteStaleMirror_(ev, dstId, syncGroup, dryRun);
+    }
+  });
+}
+
+function deleteStaleMirror_(ev, dstId, syncGroup, dryRun) {
+  const matches = findMirrors_(ev, dstId, syncGroup);
+  const keep    = dedup_(matches, dstId, dryRun);
+  if (keep) {
+    Logger.log('DELETE stale mirror [' + keep.id + '] (outside window)');
+    if (!dryRun) Calendar.Events.remove(dstId, keep.id);
+  }
 }
 
 function processMirror_(ev, dstId, syncGroup, label, dryRun) {

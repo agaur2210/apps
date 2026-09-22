@@ -46,3 +46,12 @@ function formatLastSync_(iso) {
 function hasText_(v) {
   return !!(v && String(v).trim());
 }
+
+function isInWindow_(ev, pastDays, futureDays) {
+  const raw = ev.start && (ev.start.dateTime || ev.start.date);
+  if (!raw) return false;
+  const start = new Date(raw);
+  const now   = new Date();
+  return start >= new Date(now.getTime() - pastDays   * 86400000) &&
+         start <= new Date(now.getTime() + futureDays * 86400000);
+}

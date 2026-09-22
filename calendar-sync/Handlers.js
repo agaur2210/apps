@@ -31,6 +31,9 @@ function onSaveSettings(e) {
 
   saveSettings_(calendars, pastDays, futureDays);
   createTrigger_();
+  try { cleanupAllMirrors(); } catch (err) {
+    Logger.log('Cleanup before resync error: ' + err);
+  }
   try { syncAll_(true, false); } catch (err) {
     Logger.log('Initial sync error: ' + err);
   }

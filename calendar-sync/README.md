@@ -22,8 +22,76 @@ When you work across multiple Google accounts (personal, work, client), attendee
 | "Team standup" (work) | "Busy [yourcompany.com]" |
 | "Doctor appointment" (personal) | "Busy [gmail.com]" |
 | All-day event | All-day "Busy" block |
-| Recurring event | Recurring "Busy" block |
+| Recurring event | Single recurring "Busy" block (one mirror for the whole series) |
 | Deleted event | Mirror is removed |
+| Event rescheduled inside window | Mirror updated to new time |
+| Event moved outside window | Mirror deleted |
+
+### Sync behaviour in detail
+
+**Full sync vs. incremental sync**
+
+The first sync (and any manual "Full Resync") fetches every event within your configured window (`-past / +future days`) using `timeMin`/`timeMax`. Every subsequent hourly sync uses a **sync token** — Google returns only what changed since the last run, with no time boundary.
+
+**Recurring events**
+
+A recurring series is mirrored as a single recurring "Busy" block, not as individual instances. When the series is edited (time, recurrence rule, etc.), Google's sync token response may return hundreds of individual instances instead of the master event. The sync engine:
+
+1. Detects all instances (by `recurringEventId` field or the `_20260923T140000Z` suffix in the event ID)
+2. Extracts one unique master ID from all of them
+3. Fetches the master event directly with `Calendar.Events.get`
+4. Updates the single mirror — one API write regardless of how many instances Google returned
+
+Example — weekly standup edited to move 30 minutes later:
+```
+Sync token returns: 200 instances of abc123_20240101T..., abc123_20240108T..., ...
+Engine detects:     all are instances of master "abc123"
+Engine fetches:     Calendar.Events.get("abc123") → master event with new time
+Engine writes:      UPDATE mirror [abc123] → [existing-mirror-id]   (1 write)
+```
+
+**Sync window enforcement**
+
+The window setting controls which events get mirrors. It is enforced on every sync run, not just the initial one:
+
+| Scenario | What happens |
+|---|---|
+| New event inside window | Mirror created |
+| Event rescheduled, still inside window | Mirror updated |
+| Event rescheduled outside window | Mirror deleted |
+| Event outside window from the start | Skipped, no mirror |
+| Recurring series (any start date) | Always mirrored — the series has future occurrences |
+| Cancelled event | Mirror always deleted, regardless of window |
+
+Example — sync window is `−1 / +2 days`, today is Wednesday:
+
+```
+Monday meeting (2 days ago)     → outside window → no mirror
+Tuesday meeting (1 day ago)     → inside window  → mirror created
+Thursday meeting (1 day ahead)  → inside window  → mirror created
+Friday meeting (2 days ahead)   → inside window  → mirror created
+Next Monday meeting (5 days)    → outside window → no mirror
+Weekly standup (recurring)      → always mirrored (has future occurrences)
+```
+
+**Changing the sync window**
+
+When you save new settings, the add-on:
+1. Deletes **all** existing mirrors (`cleanupAllMirrors`)
+2. Runs a full resync with the new window
+
+This ensures mirrors from the old window are not left as stale busy blocks.
+
+Example — window changed from `+30 days` to `+7 days`:
+```
+Before: mirrors exist for events on days 1–30
+Save settings: all mirrors deleted
+After resync:  mirrors recreated only for days 1–7
+```
+
+**Individual instance exceptions**
+
+If a single occurrence of a recurring series is rescheduled (e.g. next week's standup moves from 2pm to 4pm), the mirror retains the original series time for that slot. The add-on syncs at the series level — individual exceptions are not tracked. The busy block is still correct to within the rescheduled duration.
 
 ## Project structure
 
@@ -272,10 +340,10 @@ After a real sync, open the primary calendar and check:
 
 ### Incremental vs. full sync
 
-- `runSync()` — incremental (uses sync tokens, only processes changes since last run)
-- `syncAll_(true, false)` — full resync (ignores tokens, re-reads the entire sync window)
+- `runSync()` — incremental (uses sync tokens, only processes changes since last run; window enforced per event)
+- `syncAll_(true, false)` — full resync (ignores tokens, re-reads the entire sync window from scratch)
 
-Run a full resync after changing the sync window or adding a new calendar.
+Saving settings via the add-on UI automatically wipes all mirrors and runs a full resync — you don't need to do this manually after a window change.
 
 ## Privacy notes
 

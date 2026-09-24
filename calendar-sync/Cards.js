@@ -205,7 +205,7 @@ function buildStatusCard_(s) {
     )
     .addWidget(
       CardService.newTextButton()
-        .setText('Remove all Busy blocks')
+        .setText('Delete all sync blocks')
         .setOnClickAction(CardService.newAction().setFunctionName('onCleanupMirrors'))
     )
     .addWidget(

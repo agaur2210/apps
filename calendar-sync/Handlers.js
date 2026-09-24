@@ -76,7 +76,7 @@ function onFullResync() {
 function onCleanupMirrors() {
   try {
     cleanupAllMirrors();
-    return notify_('All Busy blocks removed.');
+    return notify_('All sync blocks deleted.');
   } catch (err) {
     return notify_('Cleanup error: ' + err.message);
   }

@@ -32,6 +32,15 @@ function runSync() {
   syncAll_(false, false);
 }
 
+// Called by a one-time trigger after onSaveSettings — runs with the 6-minute limit.
+function runInitialSync() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runInitialSync')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  cleanupAllMirrors();
+  syncAll_(true, false);
+}
+
 // ── Utility entry points (run from the script editor) ─────────
 
 function deleteAllTriggers() {

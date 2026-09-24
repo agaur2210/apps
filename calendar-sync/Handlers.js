@@ -30,16 +30,12 @@ function onSaveSettings(e) {
   }
 
   saveSettings_(calendars, pastDays, futureDays);
+  clearSyncTokens_();
   createTrigger_();
-  try { cleanupAllMirrors(); } catch (err) {
-    Logger.log('Cleanup before resync error: ' + err);
-  }
-  try { syncAll_(true, false); } catch (err) {
-    Logger.log('Initial sync error: ' + err);
-  }
+  ScriptApp.newTrigger('runInitialSync').timeBased().after(1000).create();
 
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync started!'))
+    .setNotification(CardService.newNotification().setText('Settings saved. Sync starting in background...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();

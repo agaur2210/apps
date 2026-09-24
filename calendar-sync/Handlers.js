@@ -32,6 +32,9 @@ function onSaveSettings(e) {
   saveSettings_(calendars, pastDays, futureDays);
   clearSyncTokens_();
   createTrigger_();
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runInitialSync')
+    .forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('runInitialSync').timeBased().after(1000).create();
 
   return CardService.newActionResponseBuilder()

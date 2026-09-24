@@ -21,7 +21,7 @@
   "addOns": {
     "common": {
       "name": "Calendar Sync",
-      "logoUrl": "https://drive.google.com/uc?id=1OqERqa5nCDeFjOAvn3RBlRiK6e7nyERv",
+      "logoUrl": "https://agaur2210.github.io/apps/calendar-sync/images/calendar_sync_icon_128x128.png",
       "homepageTrigger": {
         "runFunction": "buildHomepage"
       }

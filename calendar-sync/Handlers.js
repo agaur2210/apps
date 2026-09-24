@@ -73,12 +73,11 @@ function onFullResync() {
 }
 
 function onCleanupMirrors() {
-  try {
-    cleanupAllMirrors();
-    return notify_('All sync blocks deleted.');
-  } catch (err) {
-    return notify_('Cleanup error: ' + err.message);
-  }
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runCleanup')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('runCleanup').timeBased().after(1000).create();
+  return notify_('Removing all sync blocks in background...');
 }
 
 function onReconfigure() {

@@ -41,6 +41,14 @@ function runInitialSync() {
   syncAll_(true, false);
 }
 
+// Called by a one-time trigger from onCleanupMirrors — runs with the 6-minute limit.
+function runCleanup() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runCleanup')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  cleanupAllMirrors();
+}
+
 // ── Utility entry points (run from the script editor) ─────────
 
 function deleteAllTriggers() {

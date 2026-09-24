@@ -1,5 +1,6 @@
-// Only two trigger types ever exist: runSync (hourly) and runBackground (one-shot).
-const MANAGED_TRIGGERS_ = new Set(['runSync', 'runBackground']);
+// Active: runSync (hourly) + runBackground (one-shot).
+// Legacy names included so clearAllManagedTriggers_ removes stale triggers from old deployments.
+const MANAGED_TRIGGERS_ = new Set(['runSync', 'runBackground', 'runInitialSync', 'runCleanup', 'runFullResync', 'runStopAndClear']);
 
 // Deletes all managed triggers and clears the stored trigger ID.
 function clearAllManagedTriggers_() {

@@ -150,7 +150,8 @@ function buildSetupCard_(prefill) {
 }
 
 function buildStatusCard_(s) {
-  const running = !!(s.triggerId && isTriggerAlive_(s.triggerId));
+  const pending = !!userProps_().getProperty(PROP_PENDING_OP);
+  const running = !pending && !!(s.triggerId && isTriggerAlive_(s.triggerId));
 
   const calSection = CardService.newCardSection().setHeader('Calendars');
   s.calendars.forEach((cal, i) => {
@@ -163,7 +164,7 @@ function buildStatusCard_(s) {
   calSection.addWidget(
     CardService.newDecoratedText()
       .setTopLabel('Status')
-      .setText(running ? '🟢 Syncing every hour' : '⏸ Stopped')
+      .setText(running ? '🟢 Syncing every hour' : pending ? '🔄 Starting...' : '⏸ Stopped')
   );
   calSection.addWidget(
     CardService.newDecoratedText()
@@ -219,7 +220,7 @@ function buildStatusCard_(s) {
     .setHeader(
       CardService.newCardHeader()
         .setTitle('Calendar Bridge')
-        .setSubtitle(running ? 'Active' : 'Paused')
+        .setSubtitle(running ? 'Active' : pending ? 'Starting...' : 'Paused')
     )
     .addSection(calSection)
     .addSection(actions)

@@ -2,12 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google-site-verification" content="-NSLjRHN4aR0Ftyo2GD9ioKwK6gMGT8hYYdWE9Brpno">
   <meta name="google-site-verification" content="Qi2RjUTDmxSGwjfoJp7XfErj_QocebCdEqvBuN7N2i4">
-  <meta http-equiv="refresh" content="0; url=calendar-sync/">
-  <title>Redirecting...</title>
+  <title>Amit Gaur — Developer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #202124; background: #fff; line-height: 1.6; }
+    a { color: #1a73e8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    header { background: #1a73e8; color: #fff; padding: 56px 24px 48px; text-align: center; }
+    header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 8px; }
+    header p.headline { font-size: 1.1rem; opacity: 0.9; margin-bottom: 4px; }
+    header p.location { font-size: 0.95rem; opacity: 0.75; margin-bottom: 24px; }
+    .links { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .links a { display: inline-block; background: rgba(255,255,255,0.15); color: #fff;
+                padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 500;
+                border: 1px solid rgba(255,255,255,0.3); transition: background 0.15s; }
+    .links a:hover { background: rgba(255,255,255,0.25); text-decoration: none; }
+
+    .container { max-width: 780px; margin: 0 auto; padding: 48px 24px; }
+    .section { margin-bottom: 56px; }
+    .section h2 { font-size: 1.4rem; font-weight: 600; color: #1a73e8;
+                  border-bottom: 2px solid #e8f0fe; padding-bottom: 8px; margin-bottom: 24px; }
+
+    .about p { color: #3c4043; margin-bottom: 12px; }
+
+    .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .app-card { border: 1px solid #e0e0e0; border-radius: 12px; padding: 24px;
+                transition: box-shadow 0.15s; }
+    .app-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    .app-card img { width: 48px; height: 48px; border-radius: 10px; margin-bottom: 12px; display: block; }
+    .app-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    .app-card p { font-size: 0.9rem; color: #5f6368; margin-bottom: 16px; }
+    .app-card a { font-size: 0.9rem; font-weight: 500; }
+
+    .certs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .cert { background: #f8f9fa; border-radius: 8px; padding: 16px; }
+    .cert .issuer { font-size: 0.75rem; color: #80868b; text-transform: uppercase;
+                    letter-spacing: 0.5px; margin-bottom: 4px; }
+    .cert .name { font-size: 0.9rem; font-weight: 500; color: #202124; }
+
+    .edu-item { margin-bottom: 20px; }
+    .edu-item h3 { font-size: 1rem; font-weight: 600; }
+    .edu-item p { font-size: 0.9rem; color: #5f6368; }
+
+    footer { background: #f8f9fa; border-top: 1px solid #e0e0e0; text-align: center;
+             padding: 24px; font-size: 0.85rem; color: #5f6368; }
+  </style>
 </head>
 <body>
-  <a href="calendar-sync/">Calendar Sync</a>
+
+<header>
+  <h1>Amit Gaur</h1>
+  <p class="headline">Technology Professional &middot; <span id="exp-years"></span>+ years experience</p>
+  <script>document.getElementById('exp-years').textContent = new Date().getFullYear() - 2012;</script>
+  <p class="location">Madrid, Spain</p>
+  <div class="links">
+    <a href="https://www.linkedin.com/in/amit2210/" target="_blank">LinkedIn</a>
+    <a href="https://github.com/agaur2210/apps" target="_blank">GitHub</a>
+    <a href="mailto:lucamit@gmail.com">Email</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <section class="section about">
+    <h2>About</h2>
+    <p>Technology professional with over <span class="exp-years-inline"></span> years of experience building software across India and Europe.
+    <script>document.querySelectorAll('.exp-years-inline').forEach(el => el.textContent = new Date().getFullYear() - 2012);</script> Currently based in Madrid, Spain. Focused on developer tools, automation, and cloud-native applications.</p>
+    <p>Certified in AI/ML technologies including the Claude API by Anthropic, AWS, and distributed systems architecture.</p>
+  </section>
+
+  <section class="section">
+    <h2>Apps</h2>
+    <div class="apps">
+      <div class="app-card">
+        <img src="calendar-sync/images/calendar_sync_icon_96x96.png" alt="Calendar Sync icon">
+        <h3>Calendar Sync</h3>
+        <p>Google Workspace™ Add-on that mirrors free/busy time across multiple Google Calendars™ without sharing event details.</p>
+        <a href="calendar-sync/">View details &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Certifications</h2>
+    <div class="certs">
+      <div class="cert">
+        <div class="issuer">Anthropic</div>
+        <div class="name">Building with the Claude API</div>
+      </div>
+      <div class="cert">
+        <div class="issuer">Anthropic</div>
+        <div class="name">AI Fluency Framework &amp; Foundations</div>
+      </div>
+      <div class="cert">
+        <div class="issuer">Anthropic</div>
+        <div class="name">Claude 101</div>
+      </div>
+      <div class="cert">
+        <div class="issuer">Udemy</div>
+        <div class="name">Microservice Pattern &amp; Architecture</div>
+      </div>
+      <div class="cert">
+        <div class="issuer">Udemy</div>
+        <div class="name">AWS Associate Developer</div>
+      </div>
+      <div class="cert">
+        <div class="issuer">IBM</div>
+        <div class="name">Big Data Fundamentals</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Education</h2>
+    <div class="edu-item">
+      <h3>Illinois Tech Stuart School of Business</h3>
+      <p>2018 &ndash; 2019</p>
+    </div>
+    <div class="edu-item">
+      <h3>Bachelor's Degree</h3>
+      <p>2008 &ndash; 2012</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <p>Amit Gaur &mdash; <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a> &mdash; Madrid, Spain</p>
+</footer>
+
 </body>
 </html>

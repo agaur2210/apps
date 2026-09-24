@@ -1,14 +1,18 @@
-function createTrigger_() {
-  const managed = new Set(['runSync', 'runInitialSync', 'runCleanup', 'runFullResync', 'runStopAndClear']);
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (managed.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
-  });
+const MANAGED_TRIGGERS_ = new Set(['runSync', 'runInitialSync', 'runCleanup', 'runFullResync', 'runStopAndClear']);
 
+function clearAllManagedTriggers_() {
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (MANAGED_TRIGGERS_.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
+  });
+  userProps_().deleteProperty(PROP_TRIGGER_ID);
+}
+
+function createTrigger_() {
+  clearAllManagedTriggers_();
   const t = ScriptApp.newTrigger('runSync')
     .timeBased()
     .everyHours(1)
     .create();
-
   userProps_().setProperty(PROP_TRIGGER_ID, t.getUniqueId());
 }
 

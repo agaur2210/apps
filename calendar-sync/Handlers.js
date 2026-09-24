@@ -31,14 +31,7 @@ function onSaveSettings(e) {
 
   saveSettings_(calendars, pastDays, futureDays);
   clearSyncTokens_();
-  // Delete ALL managed triggers first, then create only 1 (runInitialSync).
-  // runInitialSync will call createTrigger_() after it finishes — trigger context
-  // has full script permissions, card actions do not.
-  const allManaged = new Set(['runSync', 'runInitialSync', 'runCleanup', 'runFullResync', 'runStopAndClear']);
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (allManaged.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
-  });
-  userProps_().deleteProperty(PROP_TRIGGER_ID);
+  clearAllManagedTriggers_();
   ScriptApp.newTrigger('runInitialSync').timeBased().after(1000).create();
 
   return CardService.newActionResponseBuilder()
@@ -67,17 +60,13 @@ function onStopSync() {
 }
 
 function onFullResync() {
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runFullResync')
-    .forEach(t => ScriptApp.deleteTrigger(t));
+  clearAllManagedTriggers_();
   ScriptApp.newTrigger('runFullResync').timeBased().after(1000).create();
   return notify_('Full resync starting in background...');
 }
 
 function onCleanupMirrors() {
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runCleanup')
-    .forEach(t => ScriptApp.deleteTrigger(t));
+  clearAllManagedTriggers_();
   ScriptApp.newTrigger('runCleanup').timeBased().after(1000).create();
   return notify_('Removing all sync blocks in background...');
 }
@@ -122,7 +111,6 @@ function onRemoveCalendar(e) {
 }
 
 function onStopAndClear() {
-  deleteTrigger_();
   const s = getSettings_();
   const p = userProps_();
   if (s.calendars.length) {
@@ -133,9 +121,7 @@ function onStopAndClear() {
   p.deleteProperty(PROP_PAST_DAYS);
   p.deleteProperty(PROP_FUTURE_DAYS);
   clearSyncTokens_();
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runStopAndClear')
-    .forEach(t => ScriptApp.deleteTrigger(t));
+  clearAllManagedTriggers_();
   ScriptApp.newTrigger('runStopAndClear').timeBased().after(1000).create();
   return CardService.newActionResponseBuilder()
     .setNotification(CardService.newNotification().setText('Sync stopped. Removing sync blocks in background...'))

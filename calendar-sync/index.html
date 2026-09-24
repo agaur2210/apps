@@ -47,6 +47,7 @@
 
 <nav>
   <a href="#about">About</a>
+  <a href="#setup">Setup Guide</a>
   <a href="#privacy-policy">Privacy Policy</a>
   <a href="#terms-of-service">Terms of Service</a>
 </nav>
@@ -78,6 +79,58 @@
     </div>
 
     <p>Source code: <a href="https://github.com/agaur2210/apps/tree/main/calendar-sync" target="_blank">github.com/agaur2210/apps</a></p>
+  </section>
+
+  <!-- SETUP GUIDE -->
+  <section id="setup" class="section">
+    <h2>Setup Guide</h2>
+
+    <h3>What you need</h3>
+    <ul>
+      <li>A Google account</li>
+      <li>Google Calendar open in a browser</li>
+      <li>The Calendar Sync add-on installed</li>
+    </ul>
+
+    <h3>Step 1 — Install the add-on</h3>
+    <p>Open the Google Workspace Marketplace and search for <strong>Calendar Sync</strong>. Click <strong>Install</strong> and follow the prompts. Grant the requested permissions when asked. Open Google Calendar — a <strong>Calendar Sync</strong> panel appears in the right sidebar.</p>
+
+    <h3>Step 2 — Add your calendars</h3>
+    <p>In the Calendar Sync panel, click <strong>Settings</strong>. <strong>Calendar 1</strong> is your primary calendar — enter your main Google account email (e.g. <code>you@work.com</code>). Add your secondary calendars below (e.g. <code>you@gmail.com</code>, <code>you@client.com</code>). You can add up to <strong>10 calendars</strong>.</p>
+
+    <h3>Step 3 — Set your sync window</h3>
+    <p>The sync window controls how far back and forward to create busy blocks.</p>
+    <ul>
+      <li><strong>Days in the past</strong> — how many days back to mirror (default: 7)</li>
+      <li><strong>Days in the future</strong> — how many days ahead to mirror (default: 7)</li>
+    </ul>
+
+    <h3>Step 4 — Save and start</h3>
+    <p>Click <strong>Save &amp; Start Sync</strong>. The add-on will run a full sync immediately, create <strong>"Busy [domain]"</strong> blocks on your primary calendar, and set up an hourly trigger to keep everything in sync automatically.</p>
+
+    <h3>What the busy blocks look like</h3>
+    <table style="width:100%;border-collapse:collapse;margin:12px 0;">
+      <thead><tr style="background:#f8f9fa;"><th style="text-align:left;padding:8px;border:1px solid #e0e0e0;">Event on secondary calendar</th><th style="text-align:left;padding:8px;border:1px solid #e0e0e0;">What appears on your primary calendar</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;">"Team standup" (work)</td><td style="padding:8px;border:1px solid #e0e0e0;">Busy [yourcompany.com]</td></tr>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;">"Doctor appointment" (personal)</td><td style="padding:8px;border:1px solid #e0e0e0;">Busy [gmail.com]</td></tr>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;">All-day event</td><td style="padding:8px;border:1px solid #e0e0e0;">All-day "Busy" block</td></tr>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;">Cancelled event</td><td style="padding:8px;border:1px solid #e0e0e0;">Mirror removed</td></tr>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;">Rescheduled event</td><td style="padding:8px;border:1px solid #e0e0e0;">Mirror updated</td></tr>
+      </tbody>
+    </table>
+    <p>No titles, descriptions, locations, or attendees are ever copied — only the time slot.</p>
+
+    <h3>Managing the sync</h3>
+    <table style="width:100%;border-collapse:collapse;margin:12px 0;">
+      <thead><tr style="background:#f8f9fa;"><th style="text-align:left;padding:8px;border:1px solid #e0e0e0;">Action</th><th style="text-align:left;padding:8px;border:1px solid #e0e0e0;">What it does</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;"><strong>Pause</strong></td><td style="padding:8px;border:1px solid #e0e0e0;">Stops the hourly trigger (mirrors stay in place)</td></tr>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;"><strong>Resume</strong></td><td style="padding:8px;border:1px solid #e0e0e0;">Restarts the hourly trigger</td></tr>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;"><strong>Full Resync</strong></td><td style="padding:8px;border:1px solid #e0e0e0;">Deletes all mirrors and rebuilds from scratch</td></tr>
+        <tr><td style="padding:8px;border:1px solid #e0e0e0;"><strong>Stop &amp; Clean Up</strong></td><td style="padding:8px;border:1px solid #e0e0e0;">Deletes all mirrors and removes the trigger</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <!-- PRIVACY POLICY -->

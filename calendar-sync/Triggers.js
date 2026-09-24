@@ -1,8 +1,9 @@
 function createTrigger_() {
-  // Clear any orphaned runSync triggers from past installs
+  // Clear all orphaned triggers before creating a new one
   try {
+    const managed = new Set(['runSync', 'runInitialSync', 'runCleanup']);
     ScriptApp.getProjectTriggers().forEach(t => {
-      if (t.getHandlerFunction() === 'runSync') ScriptApp.deleteTrigger(t);
+      if (managed.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
     });
   } catch (_) {}
 

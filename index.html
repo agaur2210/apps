@@ -77,11 +77,6 @@
 <header>
   <h1>Amit Gaur</h1>
   <p class="headline">Software Engineer &middot; .NET Core &middot; AWS &middot; Cloud-Native &middot; <span id="exp-years"></span>+ yrs</p>
-  <script>
-    var yrs = new Date().getFullYear() - 2012;
-    document.getElementById('exp-years').textContent = yrs;
-    document.querySelectorAll('.exp-years-inline').forEach(function(el){ el.textContent = yrs; });
-  </script>
   <p class="location">Madrid, Spain</p>
   <div class="links">
     <a href="https://www.linkedin.com/in/amit2210/" target="_blank">LinkedIn</a>
@@ -298,5 +293,10 @@
   <p>Amit Gaur &mdash; <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a> &mdash; Madrid, Spain</p>
 </footer>
 
+<script>
+  var yrs = new Date().getFullYear() - 2012;
+  document.getElementById('exp-years').textContent = yrs;
+  document.querySelectorAll('.exp-years-inline').forEach(function(el){ el.textContent = yrs; });
+</script>
 </body>
 </html>

@@ -4,15 +4,6 @@ function readIntField_(fi, name, fallback) {
   return (n > 0) ? n : fallback;
 }
 
-function readFields_(fi, prefix) {
-  const out = [];
-  for (let i = 0; i < MAX_CALENDARS; i++) {
-    const key = prefix + i;
-    if (!fi[key]) break;
-    out.push(fi[key].stringInputs.value[0] || '');
-  }
-  return out;
-}
 
 function domainLabel_(email) {
   const at = email.indexOf('@');

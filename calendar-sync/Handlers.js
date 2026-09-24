@@ -162,11 +162,6 @@ function onCancelReconfigure() {
     .build();
 }
 
-function onRefreshStatus() {
-  return CardService.newActionResponseBuilder()
-    .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
-    .build();
-}
 
 function onRemoveCalendar(e) {
   const fi     = ((e || {}).commonEventObject || {}).formInputs || {};

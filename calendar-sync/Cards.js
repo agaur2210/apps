@@ -118,7 +118,7 @@ function buildSetupCard_(prefill) {
     } else {
       calSection.addWidget(
         CardService.newDecoratedText()
-          .setTopLabel('Calendar 1 — primary')
+          .setTopLabel('Calendar 1 (primary)')
           .setText(val || userEmail)
           .setStartIcon(iconImg_('account_circle'))
       );
@@ -196,9 +196,8 @@ function formatNextRun_(ts) {
 
 // ── Status card ───────────────────────────────────────────────────────────────
 function buildStatusCard_(s) {
-  const pending  = !!userProps_().getProperty(PROP_PENDING_OP);
-  const running  = !!(s.triggerId && isTriggerAlive_(s.triggerId));
-  const allPaused = !running;
+  const pending = !!userProps_().getProperty(PROP_PENDING_OP);
+  const running = !!(s.triggerId && isTriggerAlive_(s.triggerId));
 
   // ── Last background job result banner ────────────────────────────────────
   let lastResult = null;

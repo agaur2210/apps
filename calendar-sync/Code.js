@@ -39,6 +39,7 @@ function runInitialSync() {
     .forEach(t => ScriptApp.deleteTrigger(t));
   cleanupAllMirrors();
   syncAll_(true, false);
+  createTrigger_(); // Set up the hourly sync from trigger context (full permissions)
 }
 
 // Called by a one-time trigger from onCleanupMirrors — runs with the 6-minute limit.

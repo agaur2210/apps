@@ -31,10 +31,14 @@ function onSaveSettings(e) {
 
   saveSettings_(calendars, pastDays, futureDays);
   clearSyncTokens_();
-  createTrigger_();
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runInitialSync')
-    .forEach(t => ScriptApp.deleteTrigger(t));
+  // Delete ALL managed triggers first, then create only 1 (runInitialSync).
+  // runInitialSync will call createTrigger_() after it finishes — trigger context
+  // has full script permissions, card actions do not.
+  const allManaged = new Set(['runSync', 'runInitialSync', 'runCleanup', 'runFullResync', 'runStopAndClear']);
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (allManaged.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
+  });
+  userProps_().deleteProperty(PROP_TRIGGER_ID);
   ScriptApp.newTrigger('runInitialSync').timeBased().after(1000).create();
 
   return CardService.newActionResponseBuilder()

@@ -49,6 +49,27 @@ function runCleanup() {
   cleanupAllMirrors();
 }
 
+// Called by a one-time trigger from onFullResync — runs with the 6-minute limit.
+function runFullResync() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runFullResync')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  clearSyncTokens_();
+  syncAll_(true, false);
+}
+
+// Called by a one-time trigger from onStopAndClear — cleans up mirrors after settings are cleared.
+function runStopAndClear() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runStopAndClear')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  const p = userProps_();
+  const json = p.getProperty('pending_cleanup_cals');
+  p.deleteProperty('pending_cleanup_cals');
+  if (!json) return;
+  JSON.parse(json).forEach(calId => deleteMirrorsByPrivateProp_(calId));
+}
+
 // ── Utility entry points (run from the script editor) ─────────
 
 function deleteAllTriggers() {

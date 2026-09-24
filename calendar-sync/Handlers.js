@@ -63,13 +63,11 @@ function onStopSync() {
 }
 
 function onFullResync() {
-  clearSyncTokens_();
-  try {
-    syncAll_(true, false);
-    return notify_('Full resync complete.');
-  } catch (err) {
-    return notify_('Resync error: ' + err.message);
-  }
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runFullResync')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('runFullResync').timeBased().after(1000).create();
+  return notify_('Full resync starting in background...');
 }
 
 function onCleanupMirrors() {
@@ -82,7 +80,6 @@ function onCleanupMirrors() {
 
 function onReconfigure() {
   const s = getSettings_();
-  deleteTrigger_();
   return CardService.newActionResponseBuilder()
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(
@@ -122,14 +119,22 @@ function onRemoveCalendar(e) {
 
 function onStopAndClear() {
   deleteTrigger_();
-  clearSyncTokens_();
+  const s = getSettings_();
   const p = userProps_();
+  if (s.calendars.length) {
+    p.setProperty('pending_cleanup_cals', JSON.stringify(s.calendars));
+  }
   p.deleteProperty(PROP_CALENDARS);
   p.deleteProperty(PROP_SYNC_GROUP);
   p.deleteProperty(PROP_PAST_DAYS);
   p.deleteProperty(PROP_FUTURE_DAYS);
+  clearSyncTokens_();
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'runStopAndClear')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('runStopAndClear').timeBased().after(1000).create();
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync stopped and all calendars removed.'))
+    .setNotification(CardService.newNotification().setText('Sync stopped. Removing sync blocks in background...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();

@@ -52,6 +52,12 @@ function runBackground() {
   p.deleteProperty('bgWasSyncRunning');
 
   if (op === 'initialSync') {
+    // If Calendar 1 changed, clean mirrors off the old primary before touching the new one.
+    const oldPrimary = p.getProperty('prev_primary');
+    if (oldPrimary) {
+      p.deleteProperty('prev_primary');
+      deleteMirrorsByQuery_(oldPrimary, { privateExtendedProperty: EXT_BY + '=' + BY_VALUE });
+    }
     cleanupAllMirrors();
     syncAll_(true, false);
     createTrigger_();
@@ -69,10 +75,11 @@ function runBackground() {
     if (wasSyncRunning) createTrigger_();
   } else if (op === 'stopAndClear') {
     const primaryId = p.getProperty('pending_cleanup_primary');
+    const sg        = p.getProperty('pending_cleanup_sg');
     p.deleteProperty('pending_cleanup_primary');
+    p.deleteProperty('pending_cleanup_sg');
     if (primaryId) {
       deleteMirrorsByQuery_(primaryId, { privateExtendedProperty: EXT_BY + '=' + BY_VALUE });
-      const sg = p.getProperty(PROP_SYNC_GROUP);
       if (sg) deleteMirrorsByQuery_(primaryId, { sharedExtendedProperty: EXT_SYNC_GROUP + '=' + sg });
     }
   }

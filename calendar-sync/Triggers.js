@@ -9,14 +9,22 @@ function clearAllManagedTriggers_() {
 // Stores `op` in properties, wipes all triggers (prevents the 20-trigger limit from
 // stale runSync/runBackground accumulation), then creates a fresh runBackground.
 // Saves whether sync was running so ops that don't explicitly restart it can restore the state.
+// A user lock serialises concurrent calls (e.g. two browser sessions hitting Save at once)
+// so only one runBackground trigger is ever outstanding at a time.
 function scheduleBackground_(op) {
-  const p = userProps_();
-  const triggerId = p.getProperty(PROP_TRIGGER_ID);
-  const wasSyncRunning = !!(triggerId && isTriggerAlive_(triggerId));
-  p.setProperty('bgWasSyncRunning', wasSyncRunning ? '1' : '0');
-  p.setProperty(PROP_PENDING_OP, op);
-  clearAllManagedTriggers_();
-  ScriptApp.newTrigger('runBackground').timeBased().after(1000).create();
+  const lock = LockService.getUserLock();
+  lock.waitLock(10000);
+  try {
+    const p = userProps_();
+    const triggerId = p.getProperty(PROP_TRIGGER_ID);
+    const wasSyncRunning = !!(triggerId && isTriggerAlive_(triggerId));
+    p.setProperty('bgWasSyncRunning', wasSyncRunning ? '1' : '0');
+    p.setProperty(PROP_PENDING_OP, op);
+    clearAllManagedTriggers_();
+    ScriptApp.newTrigger('runBackground').timeBased().after(1000).create();
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function createTrigger_() {

@@ -29,7 +29,12 @@ function onSaveSettings(e) {
     return notify_('Sync window days must be at least 1.');
   }
 
-  const prevCals = getSettings_().calendars;
+  const prevCals   = getSettings_().calendars;
+  const oldPrimary = prevCals[0] || null;
+  const newPrimary = calendars[0];
+  if (oldPrimary && oldPrimary !== newPrimary) {
+    userProps_().setProperty('prev_primary', oldPrimary);
+  }
   saveSettings_(calendars, pastDays, futureDays);
   clearSyncTokens_();
   // Unpause only calendars that weren't in the previous config.
@@ -57,7 +62,9 @@ function onStartSync() {
 }
 
 function onStopSync() {
-  deleteTrigger_();
+  // clearAllManagedTriggers_ instead of deleteTrigger_ to prevent orphan triggers
+  // (triggers not tracked by PROP_TRIGGER_ID) from continuing to fire after pause.
+  clearAllManagedTriggers_();
   return CardService.newActionResponseBuilder()
     .setNotification(CardService.newNotification().setText('Sync paused.'))
     .setStateChanged(true)
@@ -88,7 +95,7 @@ function onPauseCalendar(e) {
 }
 
 function onPauseAll() {
-  deleteTrigger_();
+  clearAllManagedTriggers_();
   return CardService.newActionResponseBuilder()
     .setNotification(CardService.newNotification().setText('Sync paused.'))
     .setStateChanged(true)
@@ -156,6 +163,9 @@ function onStopAndClear() {
     // Store only the primary calendar — mirrors only ever live there.
     p.setProperty('pending_cleanup_primary', s.calendars[0]);
   }
+  // Preserve the sync group ID for the background cleanup BEFORE deleting it from
+  // user properties; the background op reads it to run the shared-property query.
+  if (s.syncGroup) p.setProperty('pending_cleanup_sg', s.syncGroup);
   p.deleteProperty(PROP_CALENDARS);
   p.deleteProperty(PROP_SYNC_GROUP);
   p.deleteProperty(PROP_PAST_DAYS);

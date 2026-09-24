@@ -47,6 +47,16 @@ function hasText_(v) {
   return !!(v && String(v).trim());
 }
 
+// Stable 6-char base-36 hash of a calendar ID. Used to namespace fb_ synthetic
+// event IDs so they don't shift when the calendar list is reordered or shrunk.
+function calHash_(calId) {
+  let h = 5381;
+  for (let i = 0; i < calId.length; i++) {
+    h = (((h << 5) + h) ^ calId.charCodeAt(i)) & 0xffffffff;
+  }
+  return (h >>> 0).toString(36).padStart(6, '0').slice(-6);
+}
+
 function isInWindow_(ev, pastDays, futureDays) {
   const startRaw = ev.start && (ev.start.dateTime || ev.start.date);
   const endRaw   = ev.end   && (ev.end.dateTime   || ev.end.date);

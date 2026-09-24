@@ -26,49 +26,38 @@ function buildCalendarHomepage() {
   try { return buildMainCard_(); } catch (e) { return errorCard_(e); }
 }
 
-// ── Trigger entry point ───────────────────────────────────────
+// ── Trigger entry points ──────────────────────────────────────
 
 function runSync() {
   syncAll_(false, false);
 }
 
-// Called by a one-time trigger after onSaveSettings — runs with the 6-minute limit.
-function runInitialSync() {
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runInitialSync')
-    .forEach(t => ScriptApp.deleteTrigger(t));
-  cleanupAllMirrors();
-  syncAll_(true, false);
-  createTrigger_(); // Set up the hourly sync from trigger context (full permissions)
-}
+// Single background trigger. Operation is determined by PROP_PENDING_OP.
+// Replaces runInitialSync, runFullResync, runCleanup, runStopAndClear.
+function runBackground() {
+  // Self-delete first so it doesn't count against the limit during execution.
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === 'runBackground') ScriptApp.deleteTrigger(t);
+  });
 
-// Called by a one-time trigger from onCleanupMirrors — runs with the 6-minute limit.
-function runCleanup() {
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runCleanup')
-    .forEach(t => ScriptApp.deleteTrigger(t));
-  cleanupAllMirrors();
-}
+  const p  = userProps_();
+  const op = p.getProperty(PROP_PENDING_OP);
+  p.deleteProperty(PROP_PENDING_OP);
 
-// Called by a one-time trigger from onFullResync — runs with the 6-minute limit.
-function runFullResync() {
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runFullResync')
-    .forEach(t => ScriptApp.deleteTrigger(t));
-  clearSyncTokens_();
-  syncAll_(true, false);
-}
-
-// Called by a one-time trigger from onStopAndClear — cleans up mirrors after settings are cleared.
-function runStopAndClear() {
-  ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'runStopAndClear')
-    .forEach(t => ScriptApp.deleteTrigger(t));
-  const p = userProps_();
-  const json = p.getProperty('pending_cleanup_cals');
-  p.deleteProperty('pending_cleanup_cals');
-  if (!json) return;
-  JSON.parse(json).forEach(calId => deleteMirrorsByPrivateProp_(calId));
+  if (op === 'initialSync') {
+    cleanupAllMirrors();
+    syncAll_(true, false);
+    createTrigger_();
+  } else if (op === 'fullResync') {
+    clearSyncTokens_();
+    syncAll_(true, false);
+  } else if (op === 'cleanup') {
+    cleanupAllMirrors();
+  } else if (op === 'stopAndClear') {
+    const json = p.getProperty('pending_cleanup_cals');
+    p.deleteProperty('pending_cleanup_cals');
+    if (json) JSON.parse(json).forEach(calId => deleteMirrorsByPrivateProp_(calId));
+  }
 }
 
 // ── Utility entry points (run from the script editor) ─────────
@@ -76,6 +65,7 @@ function runStopAndClear() {
 function deleteAllTriggers() {
   ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
   userProps_().deleteProperty(PROP_TRIGGER_ID);
+  userProps_().deleteProperty(PROP_PENDING_OP);
   Logger.log('All triggers deleted.');
 }
 

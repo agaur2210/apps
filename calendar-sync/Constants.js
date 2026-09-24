@@ -20,3 +20,6 @@ const MAX_LOOP = 10;
 
 // Last sync timestamp key
 const PROP_LAST_SYNC = 'lastSync';
+
+// Pending background operation key (used by runBackground trigger)
+const PROP_PENDING_OP = 'pendingOp';

@@ -1,7 +1,7 @@
-const MANAGED_TRIGGERS_ = new Set(['runSync', 'runInitialSync', 'runCleanup', 'runFullResync', 'runStopAndClear']);
+// Only two trigger types ever exist: runSync (hourly) and runBackground (one-shot).
+const MANAGED_TRIGGERS_ = new Set(['runSync', 'runBackground']);
 
-// Deletes every managed trigger and clears the stored trigger ID.
-// Use when starting fresh (onSaveSettings, onStopAndClear, createTrigger_).
+// Deletes all managed triggers and clears the stored trigger ID.
 function clearAllManagedTriggers_() {
   ScriptApp.getProjectTriggers().forEach(t => {
     if (MANAGED_TRIGGERS_.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
@@ -9,13 +9,14 @@ function clearAllManagedTriggers_() {
   userProps_().deleteProperty(PROP_TRIGGER_ID);
 }
 
-// Deletes any existing triggers for `name`, then creates a new one-shot trigger.
-// Use for background ops (onFullResync, onCleanupMirrors) that must not touch runSync.
-function replaceBackgroundTrigger_(name) {
+// Stores `op` in properties then replaces any existing runBackground trigger with a new one.
+// At most one runBackground trigger exists at any time.
+function scheduleBackground_(op) {
+  userProps_().setProperty(PROP_PENDING_OP, op);
   ScriptApp.getProjectTriggers().forEach(t => {
-    if (t.getHandlerFunction() === name) ScriptApp.deleteTrigger(t);
+    if (t.getHandlerFunction() === 'runBackground') ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger(name).timeBased().after(1000).create();
+  ScriptApp.newTrigger('runBackground').timeBased().after(1000).create();
 }
 
 function createTrigger_() {
@@ -30,14 +31,12 @@ function createTrigger_() {
 function deleteTrigger_() {
   const p  = userProps_();
   const id = p.getProperty(PROP_TRIGGER_ID);
-  if (id) removeTriggerById_(id);
+  if (id) {
+    ScriptApp.getProjectTriggers().forEach(t => {
+      if (t.getUniqueId() === id) ScriptApp.deleteTrigger(t);
+    });
+  }
   p.deleteProperty(PROP_TRIGGER_ID);
-}
-
-function removeTriggerById_(id) {
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (t.getUniqueId() === id) ScriptApp.deleteTrigger(t);
-  });
 }
 
 function isTriggerAlive_(id) {

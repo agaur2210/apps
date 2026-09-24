@@ -32,7 +32,7 @@ function onSaveSettings(e) {
   saveSettings_(calendars, pastDays, futureDays);
   clearSyncTokens_();
   clearAllManagedTriggers_();
-  ScriptApp.newTrigger('runInitialSync').timeBased().after(1000).create();
+  scheduleBackground_('initialSync');
 
   return CardService.newActionResponseBuilder()
     .setNotification(CardService.newNotification().setText('Settings saved. Sync starting in background...'))
@@ -60,12 +60,12 @@ function onStopSync() {
 }
 
 function onFullResync() {
-  replaceBackgroundTrigger_('runFullResync');
+  scheduleBackground_('fullResync');
   return notify_('Full resync starting in background...');
 }
 
 function onCleanupMirrors() {
-  replaceBackgroundTrigger_('runCleanup');
+  scheduleBackground_('cleanup');
   return notify_('Removing all sync blocks in background...');
 }
 
@@ -120,7 +120,7 @@ function onStopAndClear() {
   p.deleteProperty(PROP_FUTURE_DAYS);
   clearSyncTokens_();
   clearAllManagedTriggers_();
-  ScriptApp.newTrigger('runStopAndClear').timeBased().after(1000).create();
+  scheduleBackground_('stopAndClear');
   return CardService.newActionResponseBuilder()
     .setNotification(CardService.newNotification().setText('Sync stopped. Removing sync blocks in background...'))
     .setStateChanged(true)

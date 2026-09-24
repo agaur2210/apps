@@ -1,11 +1,6 @@
-// Only two trigger types ever exist: runSync (hourly) + runBackground (one-shot).
-const MANAGED_TRIGGERS_ = new Set(['runSync', 'runBackground']);
-
-// Deletes all managed triggers and clears the stored trigger ID and next-run time.
+// Deletes every project trigger and clears stored trigger state.
 function clearAllManagedTriggers_() {
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (MANAGED_TRIGGERS_.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
-  });
+  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
   const p = userProps_();
   p.deleteProperty(PROP_TRIGGER_ID);
   p.deleteProperty(PROP_NEXT_RUN);

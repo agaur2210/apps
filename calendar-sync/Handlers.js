@@ -60,14 +60,12 @@ function onStopSync() {
 }
 
 function onFullResync() {
-  clearAllManagedTriggers_();
-  ScriptApp.newTrigger('runFullResync').timeBased().after(1000).create();
+  replaceBackgroundTrigger_('runFullResync');
   return notify_('Full resync starting in background...');
 }
 
 function onCleanupMirrors() {
-  clearAllManagedTriggers_();
-  ScriptApp.newTrigger('runCleanup').timeBased().after(1000).create();
+  replaceBackgroundTrigger_('runCleanup');
   return notify_('Removing all sync blocks in background...');
 }
 

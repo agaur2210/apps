@@ -12,8 +12,13 @@ function cleanupAllMirrors() {
 }
 
 function deleteMirrorsByPrivateProp_(calId) {
+  const deadline = Date.now() + 5 * 60 * 1000; // stop before 6-min limit
   let page, n = 0;
   do {
+    if (Date.now() > deadline) {
+      Logger.log('Time limit approaching — stopped at ' + n + ' mirrors. Run again to continue.');
+      return;
+    }
     const resp = Calendar.Events.list(calId, {
       privateExtendedProperty: EXT_BY + '=' + BY_VALUE,
       showDeleted:  false,

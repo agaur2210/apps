@@ -12,7 +12,6 @@ function syncAll_(forceFullSync, dryRun) {
   }
 
   try {
-    // One-way sync: only read from secondary calendars, write Busy blocks to primary
     const primaryId = s.calendars[0];
     s.calendars.slice(1).forEach((srcId, i) => {
       syncFrom_(srcId, [primaryId], i + 1, s.syncGroup, forceFullSync, dryRun, s.pastDays, s.futureDays);
@@ -37,6 +36,14 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
     const now = new Date();
     params.timeMin = new Date(now.getTime() - pastDays   * 86400000).toISOString();
     params.timeMax = new Date(now.getTime() + futureDays * 86400000).toISOString();
+  }
+
+  // Pre-load all mirrors into a cache to avoid per-event API calls in findMirrors_
+  const mirrorCaches = {};
+  if (!dryRun) {
+    dstIds.forEach(dstId => {
+      mirrorCaches[dstId] = loadMirrorCache_(dstId);
+    });
   }
 
   let pageToken, nextToken;
@@ -67,7 +74,7 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
         return;
       }
       processedIds.add(ev.id);
-      processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays);
+      processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches);
     });
 
     pageToken = resp.nextPageToken;
@@ -75,12 +82,11 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
 
   } while (pageToken);
 
-  // If sync token returned instances without their master, fetch and process the master now
   pendingMasters.forEach(masterId => {
     if (processedIds.has(masterId)) return;
     try {
       const master = Calendar.Events.get(srcId, masterId);
-      processEvent_(master, dstIds, syncGroup, label, dryRun, pastDays, futureDays);
+      processEvent_(master, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches);
     } catch (_) {}
   });
 
@@ -88,7 +94,31 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
   Logger.log('Synced ' + srcId + ' → ' + dstIds.length + ' calendar(s)');
 }
 
-function processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays) {
+// Load all mirrors for a calendar into a map keyed by source event ID.
+// Replaces N*2 per-event API calls with a single paginated fetch.
+function loadMirrorCache_(dstId) {
+  const cache = {};
+  let page;
+  do {
+    const resp = Calendar.Events.list(dstId, {
+      privateExtendedProperty: EXT_BY + '=' + BY_VALUE,
+      showDeleted: false,
+      maxResults: 2500,
+      pageToken: page || undefined,
+    });
+    (resp.items || []).forEach(m => {
+      const sourceId = privateProps_(m)[EXT_SOURCE_ID];
+      if (sourceId) {
+        if (!cache[sourceId]) cache[sourceId] = [];
+        cache[sourceId].push(m);
+      }
+    });
+    page = resp.nextPageToken;
+  } while (page);
+  return cache;
+}
+
+function processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches) {
   if (!ev.id) return;
   if (isMirror_(ev, syncGroup)) return;
   if ((ev.eventType || 'default') !== 'default') return;
@@ -100,16 +130,17 @@ function processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDay
   const inWindow  = isInWindow_(ev, pastDays, futureDays);
 
   dstIds.forEach(dstId => {
+    const cache = mirrorCaches ? mirrorCaches[dstId] : null;
     if (cancelled || recurring || inWindow) {
-      processMirror_(ev, dstId, syncGroup, label, dryRun);
+      processMirror_(ev, dstId, syncGroup, label, dryRun, cache);
     } else {
-      deleteStaleMirror_(ev, dstId, syncGroup, dryRun);
+      deleteStaleMirror_(ev, dstId, syncGroup, dryRun, cache);
     }
   });
 }
 
-function deleteStaleMirror_(ev, dstId, syncGroup, dryRun) {
-  const matches = findMirrors_(ev, dstId, syncGroup);
+function deleteStaleMirror_(ev, dstId, syncGroup, dryRun, cache) {
+  const matches = findMirrors_(ev, dstId, syncGroup, cache);
   const keep    = dedup_(matches, dstId, dryRun);
   if (keep) {
     Logger.log('DELETE stale mirror [' + keep.id + '] (outside window)');
@@ -117,8 +148,8 @@ function deleteStaleMirror_(ev, dstId, syncGroup, dryRun) {
   }
 }
 
-function processMirror_(ev, dstId, syncGroup, label, dryRun) {
-  const matches = findMirrors_(ev, dstId, syncGroup);
+function processMirror_(ev, dstId, syncGroup, label, dryRun, cache) {
+  const matches = findMirrors_(ev, dstId, syncGroup, cache);
   const keep    = dedup_(matches, dstId, dryRun);
 
   if (ev.status === 'cancelled') {
@@ -175,7 +206,15 @@ function isMirror_(ev, syncGroup) {
   );
 }
 
-function findMirrors_(ev, dstId, syncGroup) {
+// Use the pre-loaded cache when available; fall back to API calls for dryRun.
+function findMirrors_(ev, dstId, syncGroup, cache) {
+  if (cache) {
+    return (cache[ev.id] || [])
+      .filter(m => m.status !== 'cancelled')
+      .sort((a, b) => new Date(a.created || 0) - new Date(b.created || 0));
+  }
+
+  // dryRun fallback: original per-event API lookup
   const seen = {};
   const out  = [];
 

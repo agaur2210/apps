@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Sync — Google Workspace Add-on</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #202124; background: #fff; line-height: 1.6; }
+    a { color: #1a73e8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    header { background: #1a73e8; color: #fff; padding: 48px 24px; text-align: center; }
+    header h1 { font-size: 2rem; font-weight: 600; margin-bottom: 8px; }
+    header p { font-size: 1.1rem; opacity: 0.9; max-width: 560px; margin: 0 auto; }
+
+    nav { background: #f8f9fa; border-bottom: 1px solid #e0e0e0; padding: 12px 24px; text-align: center; }
+    nav a { margin: 0 16px; font-size: 0.95rem; color: #1a73e8; font-weight: 500; }
+
+    .container { max-width: 780px; margin: 0 auto; padding: 40px 24px; }
+
+    .section { margin-bottom: 64px; }
+    .section h2 { font-size: 1.5rem; font-weight: 600; color: #1a73e8; border-bottom: 2px solid #e8f0fe; padding-bottom: 8px; margin-bottom: 24px; }
+    .section h3 { font-size: 1.05rem; font-weight: 600; margin: 24px 0 8px; color: #202124; }
+    .section p { margin-bottom: 12px; color: #3c4043; }
+    .section ul { margin: 8px 0 12px 20px; color: #3c4043; }
+    .section ul li { margin-bottom: 4px; }
+
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+    .feature { background: #f8f9fa; border-radius: 8px; padding: 20px; }
+    .feature h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; color: #202124; }
+    .feature p { font-size: 0.9rem; color: #5f6368; margin: 0; }
+
+    .meta { font-size: 0.85rem; color: #80868b; margin-bottom: 20px; }
+
+    footer { background: #f8f9fa; border-top: 1px solid #e0e0e0; text-align: center; padding: 24px; font-size: 0.85rem; color: #5f6368; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Calendar Sync</h1>
+  <p>Keep your free/busy time in sync across multiple Google Calendars — without sharing event details.</p>
+</header>
+
+<nav>
+  <a href="#about">About</a>
+  <a href="#privacy-policy">Privacy Policy</a>
+  <a href="#terms-of-service">Terms of Service</a>
+</nav>
+
+<div class="container">
+
+  <!-- ABOUT -->
+  <section id="about" class="section">
+    <h2>About Calendar Sync</h2>
+    <p>Calendar Sync is a Google Workspace Add-on that helps users who work across multiple Google accounts keep their availability consistent. It reads events from secondary calendars and creates private <strong>"Busy [domain]"</strong> blocks on your primary calendar automatically — without copying titles, descriptions, attendees, or any other event details.</p>
+
+    <div class="features">
+      <div class="feature">
+        <h3>Privacy-preserving</h3>
+        <p>Only the time slot is copied. Titles, descriptions, locations, and attendees are never shared.</p>
+      </div>
+      <div class="feature">
+        <h3>Automatic sync</h3>
+        <p>An hourly trigger keeps calendars in sync with no manual action required.</p>
+      </div>
+      <div class="feature">
+        <h3>Up to 10 calendars</h3>
+        <p>Connect your work, personal, and client calendars in one place.</p>
+      </div>
+      <div class="feature">
+        <h3>Incremental sync</h3>
+        <p>Uses Google Calendar sync tokens so only changed events are processed each run.</p>
+      </div>
+    </div>
+
+    <p>Source code: <a href="https://github.com/agaur2210/apps/tree/main/calendar-sync" target="_blank">github.com/agaur2210/apps</a></p>
+  </section>
+
+  <!-- PRIVACY POLICY -->
+  <section id="privacy-policy" class="section">
+    <h2>Privacy Policy</h2>
+    <p class="meta">Last updated: September 22, 2026</p>
+
+    <h3>Overview</h3>
+    <p>Calendar Sync is a free Google Workspace Add-on that helps users synchronize busy time across multiple Google Calendar accounts. The add-on creates generic "Busy" calendar blocks so that availability from one configured calendar can be reflected in another calendar without copying the details of the original event.</p>
+    <p>Calendar Sync's use of Google user data complies with the Google API Services User Data Policy, including the Limited Use requirements.</p>
+
+    <h3>Information We Access</h3>
+    <p>Calendar Sync accesses Google Calendar data only as required to provide its synchronization functionality.</p>
+    <ul>
+      <li>Calendar event timing information (start and end times) to determine when the user is busy.</li>
+      <li>Permission to create, update, and remove the "Busy" calendar events that it creates.</li>
+      <li>Your Google account email address to identify the calendar account being configured.</li>
+    </ul>
+    <p>Calendar Sync does not use or store the titles, descriptions, attendee information, conference information, or locations of your existing calendar events.</p>
+
+    <h3>How We Use Your Information</h3>
+    <p>Information obtained from Google Calendar is used solely to provide the calendar synchronization functionality requested by the user. Calendar information is used to determine busy periods and to create or remove corresponding "Busy" blocks in configured calendars.</p>
+    <p>Your information is not used for advertising, profiling, marketing, analytics, artificial intelligence or machine-learning training, or any unrelated purpose.</p>
+
+    <h3>Data Storage</h3>
+    <p>Calendar Sync does not operate an external application server or database. Configuration information required by the add-on is stored using Google Apps Script User Properties and is associated with the individual Google account using the add-on. Calendar event information is processed within Google's infrastructure and is not stored in an external database controlled by the developer. Calendar Sync does not maintain copies of users' calendar event content outside Google services.</p>
+
+    <h3>Data Sharing and Disclosure</h3>
+    <ul>
+      <li>Calendar Sync does not sell user data.</li>
+      <li>Calendar Sync does not share Google user data with advertisers, data brokers, analytics providers, or other third parties.</li>
+      <li>Calendar Sync does not transfer Google Calendar information to external servers or third-party services as part of its normal operation.</li>
+      <li>Human access to users' Google Calendar information is not provided as part of the service.</li>
+    </ul>
+
+    <h3>Third-Party Services</h3>
+    <p>Calendar Sync does not use third-party analytics, advertising, tracking, or data-processing services. The add-on operates using Google Workspace, Google Calendar APIs, and Google Apps Script services.</p>
+
+    <h3>Data Retention and Deletion</h3>
+    <p>Configuration data is retained only as necessary to provide the Calendar Sync functionality.</p>
+    <ul>
+      <li>Users can remove calendar blocks created by Calendar Sync by opening the add-on and selecting "Remove all Busy blocks."</li>
+      <li>Users can clear or change their stored configuration through the "Reconfigure" option.</li>
+      <li>Users may also revoke Calendar Sync's access to their Google account through their Google Account security settings.</li>
+    </ul>
+
+    <h3>Google API Services User Data Policy</h3>
+    <p>Calendar Sync's use and transfer of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements. Google user data is used only to provide the user-facing calendar synchronization functionality of Calendar Sync.</p>
+
+    <h3>Security</h3>
+    <p>Calendar Sync runs within Google Apps Script and Google's infrastructure. The add-on does not transmit Google Calendar information to an external developer-operated server. Access to Google Calendar data is controlled through Google's OAuth authorization system and the permissions granted by the user.</p>
+
+    <h3>Disclaimer</h3>
+    <p>Calendar Sync is provided "as is" without warranties of any kind, express or implied. While reasonable efforts are made to ensure that synchronization operates correctly, the developer does not guarantee uninterrupted or error-free operation. To the maximum extent permitted by applicable law, the developer is not responsible for loss of data, missed events, scheduling conflicts, calendar errors, service interruptions, or other damages resulting from the use or inability to use Calendar Sync.</p>
+
+    <h3>Contact</h3>
+    <p>For questions about this Privacy Policy or Calendar Sync's handling of user data, contact: <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a></p>
+  </section>
+
+  <!-- TERMS OF SERVICE -->
+  <section id="terms-of-service" class="section">
+    <h2>Terms of Service</h2>
+    <p class="meta">Last updated: September 22, 2026</p>
+
+    <h3>1. Acceptance of Terms</h3>
+    <p>By installing, accessing, or using Calendar Sync, you agree to these Terms of Service. If you do not agree to these terms, you should not install or use the add-on.</p>
+
+    <h3>2. Description of the Service</h3>
+    <p>Calendar Sync is a Google Workspace Add-on that helps synchronize busy time between configured Google Calendar accounts. The add-on may create, update, and remove generic "Busy" calendar blocks based on the availability of configured calendars. Calendar Sync is intended to assist with availability synchronization only and should not be relied upon as the sole source of important scheduling information.</p>
+
+    <h3>3. Free to Use</h3>
+    <p>Calendar Sync is currently provided free of charge. There are no subscription fees or paid features at this time. The developer reserves the right to introduce paid features, modify pricing, or discontinue free access in the future. Where reasonably possible, users will be informed before such changes take effect.</p>
+
+    <h3>4. No Warranty</h3>
+    <p>Calendar Sync is provided "as is" and "as available" without warranties of any kind, whether express or implied. The developer does not guarantee that:</p>
+    <ul>
+      <li>synchronization will always occur successfully;</li>
+      <li>the service will operate without interruptions or errors;</li>
+      <li>calendar availability will always be accurate or up to date;</li>
+      <li>all calendar events or availability changes will be detected immediately; or</li>
+      <li>the add-on will remain compatible with future changes to Google Workspace, Google Calendar, or Google Apps Script.</li>
+    </ul>
+    <p>Users should independently verify important appointments, meetings, and scheduling information.</p>
+
+    <h3>5. Limitation of Liability</h3>
+    <p>To the maximum extent permitted by applicable law, the developer will not be liable for any direct, indirect, incidental, special, consequential, or similar damages arising from the use of, or inability to use, Calendar Sync. This includes, without limitation:</p>
+    <ul>
+      <li>loss or modification of calendar data;</li>
+      <li>missed meetings or appointments;</li>
+      <li>scheduling conflicts;</li>
+      <li>incorrect or delayed synchronization;</li>
+      <li>service interruptions;</li>
+      <li>loss of productivity; or</li>
+      <li>other damages resulting from reliance on Calendar Sync.</li>
+    </ul>
+    <p>Use of Calendar Sync is at your own risk.</p>
+
+    <h3>6. User Responsibilities</h3>
+    <p>By using Calendar Sync, you agree that:</p>
+    <ul>
+      <li>you are responsible for the Google accounts and calendars you configure;</li>
+      <li>you will only connect accounts and calendars that you are authorized to access;</li>
+      <li>you will review the permissions requested by the add-on before granting access;</li>
+      <li>you will comply with applicable Google terms, policies, and acceptable-use requirements;</li>
+      <li>you will not use Calendar Sync for unlawful, abusive, fraudulent, or unauthorized purposes; and</li>
+      <li>you are responsible for verifying important calendar information before relying on synchronized availability.</li>
+    </ul>
+
+    <h3>7. Google Services</h3>
+    <p>Calendar Sync depends on services provided by Google, including Google Calendar, Google Workspace APIs, Google Apps Script, and Google's authentication infrastructure. Availability or functionality of Calendar Sync may be affected by changes, outages, restrictions, rate limits, or discontinued functionality within Google's services. The developer is not responsible for interruptions or changes caused by Google's services.</p>
+  </section>
+
+</div>
+
+<footer>
+  <p>Calendar Sync &mdash; <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a> &mdash; <a href="https://github.com/agaur2210/apps/tree/main/calendar-sync">GitHub</a></p>
+</footer>
+
+</body>
+</html>

@@ -20,6 +20,7 @@ function scheduleBackground_(op) {
     const wasSyncRunning = !!(triggerId && isTriggerAlive_(triggerId));
     p.setProperty('bgWasSyncRunning', wasSyncRunning ? '1' : '0');
     p.setProperty(PROP_PENDING_OP, op);
+    p.deleteProperty(PROP_LAST_OP_RESULT);
     clearAllManagedTriggers_();
     ScriptApp.newTrigger('runBackground').timeBased().after(1000).create();
   } finally {

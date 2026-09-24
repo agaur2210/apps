@@ -13,14 +13,26 @@ function syncAll_(forceFullSync, dryRun) {
 
   try {
     const primaryId = s.calendars[0];
+    const errors    = [];
     s.calendars.slice(1).forEach((srcId, i) => {
       if (isPausedCal_(srcId)) {
         Logger.log('Skipping paused calendar: ' + srcId);
         return;
       }
-      syncFrom_(srcId, [primaryId], i + 1, s.syncGroup, forceFullSync, dryRun, s.pastDays, s.futureDays);
+      try {
+        syncFrom_(srcId, [primaryId], i + 1, s.syncGroup, forceFullSync, dryRun, s.pastDays, s.futureDays);
+      } catch (err) {
+        const isNotFound   = String(err).includes('Not Found') || String(err).includes('404');
+        const isForbidden  = String(err).includes('403') || String(err).includes('forbidden') || String(err).includes('insufficientPermissions');
+        const friendlyMsg  = isNotFound  ? srcId + ': calendar not found. Check the email address.'
+                           : isForbidden ? srcId + ': access denied'
+                           : srcId + ': ' + err;
+        Logger.log('ERROR syncing ' + srcId + ': ' + err);
+        errors.push(friendlyMsg);
+      }
     });
     if (!dryRun) userProps_().setProperty(PROP_LAST_SYNC, new Date().toISOString());
+    if (errors.length) throw new Error(errors.join('; '));
   } finally {
     lock.releaseLock();
   }

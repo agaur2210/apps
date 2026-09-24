@@ -1,7 +1,16 @@
 function onAddCalendar(e) {
-  const fi        = ((e || {}).commonEventObject || {}).formInputs || {};
-  const calendars = readFields_(fi, 'cal');
-  calendars.push('');
+  const fi = ((e || {}).commonEventObject || {}).formInputs || {};
+  let primary = '';
+  try { primary = Session.getActiveUser().getEmail(); } catch (_) {}
+  if (!primary) primary = getSettings_().calendars[0] || '';
+  const sources = [];
+  for (let i = 1; i < MAX_CALENDARS; i++) {
+    const key = 'cal' + i;
+    if (!fi[key]) break;
+    sources.push(fi[key].stringInputs.value[0] || '');
+  }
+  sources.push('');
+  const calendars  = [primary, ...sources];
   const pastDays   = readIntField_(fi, 'pastDays',   DEFAULT_PAST_DAYS);
   const futureDays = readIntField_(fi, 'futureDays', DEFAULT_FUTURE_DAYS);
   return CardService.newActionResponseBuilder()
@@ -12,21 +21,36 @@ function onAddCalendar(e) {
 }
 
 function onSaveSettings(e) {
-  const fi   = ((e || {}).commonEventObject || {}).formInputs || {};
-  const seen = new Set();
-  const calendars = readFields_(fi, 'cal')
-    .map(v => v.trim().toLowerCase())
-    .filter(v => v && !seen.has(v) && seen.add(v));
+  const fi = ((e || {}).commonEventObject || {}).formInputs || {};
+  // Primary is the running account — not submitted via form (read-only display)
+  let primaryEmail = '';
+  try { primaryEmail = Session.getActiveUser().getEmail().trim().toLowerCase(); } catch (_) {}
+  if (!primaryEmail) primaryEmail = (getSettings_().calendars[0] || '').trim().toLowerCase();
+
+  const seen = new Set([primaryEmail].filter(Boolean));
+  const sources = [];
+  for (let i = 1; i < MAX_CALENDARS; i++) {
+    const key = 'cal' + i;
+    if (!fi[key]) break;
+    const v = (fi[key].stringInputs.value[0] || '').trim().toLowerCase();
+    if (v && !seen.has(v)) { seen.add(v); sources.push(v); }
+  }
+  const calendars = primaryEmail ? [primaryEmail, ...sources] : sources;
 
   if (calendars.length < 2) {
-    return notify_('Add at least 2 calendar emails.');
+    return notify_('Add at least 1 source calendar.', 'error');
   }
 
-  const pastDays   = readIntField_(fi, 'pastDays',   DEFAULT_PAST_DAYS);
-  const futureDays = readIntField_(fi, 'futureDays', DEFAULT_FUTURE_DAYS);
+  const pastRaw    = fi['pastDays']   && fi['pastDays'].stringInputs   && fi['pastDays'].stringInputs.value[0];
+  const futureRaw  = fi['futureDays'] && fi['futureDays'].stringInputs && fi['futureDays'].stringInputs.value[0];
+  const pastDays   = parseInt(pastRaw,   10);
+  const futureDays = parseInt(futureRaw, 10);
 
-  if (pastDays < 1 || futureDays < 1) {
-    return notify_('Sync window days must be at least 1.');
+  if (isNaN(pastDays)   || pastDays   < 1 || pastDays   > 365) {
+    return notify_('Days in the past must be a number between 1 and 365.', 'error');
+  }
+  if (isNaN(futureDays) || futureDays < 1 || futureDays > 365) {
+    return notify_('Days in the future must be a number between 1 and 365.', 'error');
   }
 
   const prevCals   = getSettings_().calendars;
@@ -46,7 +70,7 @@ function onSaveSettings(e) {
   scheduleBackground_('initialSync');
 
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Settings saved. Sync starting in background...'))
+    .setNotification(CardService.newNotification().setText('✅  Settings saved. Sync starting...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -55,7 +79,7 @@ function onSaveSettings(e) {
 function onStartSync() {
   scheduleBackground_('startSync');
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync starting...'))
+    .setNotification(CardService.newNotification().setText('🔄  Sync starting...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -66,7 +90,7 @@ function onStopSync() {
   // (triggers not tracked by PROP_TRIGGER_ID) from continuing to fire after pause.
   clearAllManagedTriggers_();
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync paused.'))
+    .setNotification(CardService.newNotification().setText('✅  Sync paused.'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -77,9 +101,12 @@ function onFullResync() {
 }
 
 function onRunNow() {
+  if (userProps_().getProperty(PROP_PENDING_OP)) {
+    return notify_('Sync already in progress. Please wait.', 'warning');
+  }
   scheduleBackground_('fullResync');
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync starting...'))
+    .setNotification(CardService.newNotification().setText('🔄  Sync starting...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -97,7 +124,7 @@ function onPauseCalendar(e) {
 function onPauseAll() {
   clearAllManagedTriggers_();
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync paused.'))
+    .setNotification(CardService.newNotification().setText('✅  Sync paused.'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -106,7 +133,7 @@ function onPauseAll() {
 function onResumeAll() {
   scheduleBackground_('startSync');
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync resuming...'))
+    .setNotification(CardService.newNotification().setText('🔄  Sync resuming...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -114,7 +141,7 @@ function onResumeAll() {
 
 function onCleanupMirrors() {
   scheduleBackground_('cleanup');
-  return notify_('Removing all sync blocks in background...');
+  return notify_('Removing all sync blocks in background...', 'working');
 }
 
 function onReconfigure() {
@@ -142,13 +169,22 @@ function onRefreshStatus() {
 }
 
 function onRemoveCalendar(e) {
-  const fi       = ((e || {}).commonEventObject || {}).formInputs || {};
-  const params   = ((e || {}).commonEventObject || {}).parameters || {};
-  const idx      = parseInt(params.index, 10);
-  const calendars  = readFields_(fi, 'cal');
+  const fi     = ((e || {}).commonEventObject || {}).formInputs || {};
+  const params = ((e || {}).commonEventObject || {}).parameters || {};
+  const idx    = parseInt(params.index, 10);
+  let primary = '';
+  try { primary = Session.getActiveUser().getEmail(); } catch (_) {}
+  if (!primary) primary = getSettings_().calendars[0] || '';
+  const sources = [];
+  for (let i = 1; i < MAX_CALENDARS; i++) {
+    const key = 'cal' + i;
+    if (!fi[key]) break;
+    sources.push(fi[key].stringInputs.value[0] || '');
+  }
+  sources.splice(idx - 1, 1);
+  const calendars  = [primary, ...sources];
   const pastDays   = readIntField_(fi, 'pastDays',   DEFAULT_PAST_DAYS);
   const futureDays = readIntField_(fi, 'futureDays', DEFAULT_FUTURE_DAYS);
-  calendars.splice(idx, 1);
   return CardService.newActionResponseBuilder()
     .setNavigation(CardService.newNavigation().updateCard(
       buildSetupCard_({ calendars, pastDays, futureDays })
@@ -174,7 +210,7 @@ function onStopAndClear() {
   clearAllManagedTriggers_();
   scheduleBackground_('stopAndClear');
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync stopped. Removing sync blocks in background...'))
+    .setNotification(CardService.newNotification().setText('✅  Sync stopped. Removing blocks in background...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -192,8 +228,10 @@ function onBackFromInfo() {
     .build();
 }
 
-function notify_(text) {
+// type: 'success' | 'error' | 'warning' | 'working' (default: no prefix)
+function notify_(text, type) {
+  const prefix = { success: '✅  ', error: '❌  ', warning: '⚠️  ', working: '🔄  ' }[type] || '';
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText(text))
+    .setNotification(CardService.newNotification().setText(prefix + text))
     .build();
 }

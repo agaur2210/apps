@@ -51,37 +51,40 @@ function runBackground() {
   p.deleteProperty(PROP_PENDING_OP);
   p.deleteProperty('bgWasSyncRunning');
 
-  if (op === 'initialSync') {
-    // If Calendar 1 changed, clean mirrors off the old primary before touching the new one.
-    const oldPrimary = p.getProperty('prev_primary');
-    if (oldPrimary) {
-      p.deleteProperty('prev_primary');
-      deleteMirrorsByQuery_(oldPrimary, { privateExtendedProperty: EXT_BY + '=' + BY_VALUE });
+  try {
+    if (op === 'initialSync') {
+      const oldPrimary = p.getProperty('prev_primary');
+      if (oldPrimary) {
+        p.deleteProperty('prev_primary');
+        deleteMirrorsByQuery_(oldPrimary, { privateExtendedProperty: EXT_BY + '=' + BY_VALUE });
+      }
+      cleanupAllMirrors();
+      syncAll_(true, false);
+      createTrigger_();
+    } else if (op === 'startSync') {
+      clearSyncTokens_();
+      syncAll_(true, false);
+      createTrigger_();
+    } else if (op === 'fullResync') {
+      clearSyncTokens_();
+      syncAll_(true, false);
+      createTrigger_();
+    } else if (op === 'cleanup') {
+      cleanupAllMirrors();
+      if (wasSyncRunning) createTrigger_();
+    } else if (op === 'stopAndClear') {
+      const primaryId = p.getProperty('pending_cleanup_primary');
+      const sg        = p.getProperty('pending_cleanup_sg');
+      p.deleteProperty('pending_cleanup_primary');
+      p.deleteProperty('pending_cleanup_sg');
+      if (primaryId) {
+        deleteMirrorsByQuery_(primaryId, { privateExtendedProperty: EXT_BY + '=' + BY_VALUE });
+        if (sg) deleteMirrorsByQuery_(primaryId, { sharedExtendedProperty: EXT_SYNC_GROUP + '=' + sg });
+      }
     }
-    cleanupAllMirrors();
-    syncAll_(true, false);
-    createTrigger_();
-  } else if (op === 'startSync') {
-    clearSyncTokens_();
-    syncAll_(true, false);
-    createTrigger_();
-  } else if (op === 'fullResync') {
-    clearSyncTokens_();
-    syncAll_(true, false);
-    createTrigger_();
-  } else if (op === 'cleanup') {
-    cleanupAllMirrors();
-    // Restore the hourly trigger if sync was running before cleanup was triggered.
-    if (wasSyncRunning) createTrigger_();
-  } else if (op === 'stopAndClear') {
-    const primaryId = p.getProperty('pending_cleanup_primary');
-    const sg        = p.getProperty('pending_cleanup_sg');
-    p.deleteProperty('pending_cleanup_primary');
-    p.deleteProperty('pending_cleanup_sg');
-    if (primaryId) {
-      deleteMirrorsByQuery_(primaryId, { privateExtendedProperty: EXT_BY + '=' + BY_VALUE });
-      if (sg) deleteMirrorsByQuery_(primaryId, { sharedExtendedProperty: EXT_SYNC_GROUP + '=' + sg });
-    }
+    p.setProperty(PROP_LAST_OP_RESULT, JSON.stringify({ ok: true, op: op, ts: Date.now() }));
+  } catch (err) {
+    p.setProperty(PROP_LAST_OP_RESULT, JSON.stringify({ ok: false, op: op, msg: String(err), ts: Date.now() }));
   }
 }
 

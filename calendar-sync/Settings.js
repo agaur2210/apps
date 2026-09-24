@@ -25,6 +25,30 @@ function saveSettings_(calendars, pastDays, futureDays) {
   }
 }
 
+function getPausedCals_() {
+  const json = userProps_().getProperty(PROP_PAUSED_CALS);
+  return json ? JSON.parse(json) : [];
+}
+
+function isPausedCal_(calId) {
+  return getPausedCals_().includes(calId);
+}
+
+function setPausedCal_(calId, paused) {
+  const p   = userProps_();
+  let   arr = getPausedCals_();
+  if (paused) {
+    if (!arr.includes(calId)) arr.push(calId);
+  } else {
+    arr = arr.filter(id => id !== calId);
+  }
+  p.setProperty(PROP_PAUSED_CALS, JSON.stringify(arr));
+}
+
+function clearPausedCals_() {
+  userProps_().deleteProperty(PROP_PAUSED_CALS);
+}
+
 function clearSyncTokens_() {
   const p    = userProps_();
   const keys = p.getKeys().filter(k => k.startsWith('syncToken_'));

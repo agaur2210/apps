@@ -155,23 +155,54 @@ function formatNextRun_(ts) {
 
 function buildStatusCard_(s) {
   const pending = !!userProps_().getProperty(PROP_PENDING_OP);
-  const running = !pending && !!(s.triggerId && isTriggerAlive_(s.triggerId));
+  const running = !!(s.triggerId && isTriggerAlive_(s.triggerId));
 
   const calSection = CardService.newCardSection().setHeader('Calendars');
+
   s.calendars.forEach((cal, i) => {
-    calSection.addWidget(
-      CardService.newDecoratedText()
-        .setTopLabel('Calendar ' + (i + 1))
-        .setText(cal)
-    );
+    const isPrimary = i === 0;
+    const paused    = !isPrimary && isPausedCal_(cal);
+    const dt = CardService.newDecoratedText()
+      .setTopLabel('Calendar ' + (i + 1) + (isPrimary ? ' (primary)' : ''));
+
+    if (!isPrimary && paused) {
+      dt.setText('⏸ ' + cal);
+    } else {
+      dt.setText(cal);
+    }
+
+    if (!isPrimary) {
+      dt.setButton(
+        CardService.newImageButton()
+          .setIconUrl(paused
+            ? 'https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/play_arrow/default/24px.svg'
+            : 'https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/pause/default/24px.svg'
+          )
+          .setAltText(paused ? 'Resume' : 'Pause')
+          .setOnClickAction(
+            CardService.newAction()
+              .setFunctionName('onPauseCalendar')
+              .setParameters({ calId: cal, paused: String(!paused) })
+          )
+      );
+    }
+    calSection.addWidget(dt);
   });
+
   calSection.addWidget(
     CardService.newDecoratedText()
       .setTopLabel('Status')
       .setText(running
         ? '🟢 Next run at ' + (s.nextRun ? formatNextRun_(s.nextRun) : '—')
-        : pending ? '🔄 Running...' : '⏸ Stopped')
+        : pending ? 'Syncing...' : '⏸ Paused')
   );
+  if (pending && !running) {
+    calSection.addWidget(
+      CardService.newTextButton()
+        .setText('Refresh Status')
+        .setOnClickAction(CardService.newAction().setFunctionName('onRefreshStatus'))
+    );
+  }
   calSection.addWidget(
     CardService.newDecoratedText()
       .setTopLabel('Last synced')
@@ -184,35 +215,25 @@ function buildStatusCard_(s) {
   );
 
   const actions = CardService.newCardSection().setHeader('Actions');
-
-  if (!running) {
-    actions.addWidget(
-      CardService.newTextButton()
-        .setText('Start Sync')
-        .setOnClickAction(CardService.newAction().setFunctionName('onStartSync'))
-    );
-  } else {
-    actions.addWidget(
-      CardService.newTextButton()
-        .setText('Pause Sync')
-        .setOnClickAction(CardService.newAction().setFunctionName('onStopSync'))
-    );
-  }
-
   actions
     .addWidget(
       CardService.newTextButton()
-        .setText('↻  Refresh Status')
-        .setOnClickAction(CardService.newAction().setFunctionName('onRefreshStatus'))
+        .setText('Run Now')
+        .setOnClickAction(CardService.newAction().setFunctionName('onRunNow'))
     )
     .addWidget(
       CardService.newTextButton()
-        .setText('Full Resync Now')
-        .setOnClickAction(CardService.newAction().setFunctionName('onFullResync'))
+        .setText('Pause All')
+        .setOnClickAction(CardService.newAction().setFunctionName('onPauseAll'))
     )
     .addWidget(
       CardService.newTextButton()
-        .setText('Delete all sync blocks')
+        .setText('Resume All')
+        .setOnClickAction(CardService.newAction().setFunctionName('onResumeAll'))
+    )
+    .addWidget(
+      CardService.newTextButton()
+        .setText('Delete all mirrored blocks')
         .setOnClickAction(CardService.newAction().setFunctionName('onCleanupMirrors'))
     )
     .addWidget(
@@ -223,11 +244,7 @@ function buildStatusCard_(s) {
 
   return CardService.newCardBuilder()
     .setName('status')
-    .setHeader(
-      CardService.newCardHeader()
-        .setTitle('Calendar Sync')
-        .setSubtitle(running ? 'Active' : pending ? 'Running...' : 'Paused')
-    )
+    .setHeader(CardService.newCardHeader().setTitle('Calendar Sync'))
     .addSection(calSection)
     .addSection(actions)
     .build();

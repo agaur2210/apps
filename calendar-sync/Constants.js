@@ -26,3 +26,6 @@ const PROP_PENDING_OP = 'pendingOp';
 
 // Estimated next runSync fire time (ms epoch string)
 const PROP_NEXT_RUN = 'nextRun';
+
+// JSON array of calendar IDs that are individually paused
+const PROP_PAUSED_CALS = 'pausedCals';

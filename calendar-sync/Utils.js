@@ -16,7 +16,7 @@ function readFields_(fi, prefix) {
 
 function domainLabel_(email) {
   const at = email.indexOf('@');
-  return at < 0 ? '' : email.slice(at + 1).split('.')[0];
+  return at < 0 ? '' : email.slice(at + 1);
 }
 
 function normDate_(f) {
@@ -48,10 +48,12 @@ function hasText_(v) {
 }
 
 function isInWindow_(ev, pastDays, futureDays) {
-  const raw = ev.start && (ev.start.dateTime || ev.start.date);
-  if (!raw) return false;
-  const start = new Date(raw);
-  const now   = new Date();
-  return start >= new Date(now.getTime() - pastDays   * 86400000) &&
-         start <= new Date(now.getTime() + futureDays * 86400000);
+  const startRaw = ev.start && (ev.start.dateTime || ev.start.date);
+  const endRaw   = ev.end   && (ev.end.dateTime   || ev.end.date);
+  if (!startRaw) return false;
+  const evStart     = new Date(startRaw);
+  const evEnd       = endRaw ? new Date(endRaw) : evStart;
+  const windowStart = new Date(Date.now() - pastDays   * 86400000);
+  const windowEnd   = new Date(Date.now() + futureDays * 86400000);
+  return evStart < windowEnd && evEnd > windowStart;
 }

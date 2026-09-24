@@ -17,15 +17,17 @@ When you work across multiple Google accounts (personal, work, client), attendee
 
 ### How events appear
 
+The mirror title is always `Busy [<domain>]`, where `<domain>` is the full domain of the source calendar email address.
+
 | Source calendar event | What appears on your primary calendar |
 |---|---|
-| "Team standup" (work) | "Busy [yourcompany.com]" |
-| "Doctor appointment" (personal) | "Busy [gmail.com]" |
-| All-day event | All-day "Busy" block |
-| Recurring event | Single recurring "Busy" block (one mirror for the whole series) |
+| "Team standup" on work@yourcompany.com | "Busy [yourcompany.com]" |
+| "Doctor appointment" on you@gmail.com | "Busy [gmail.com]" |
+| All-day event | All-day "Busy [domain]" block |
+| Recurring event | Single recurring "Busy [domain]" block (one mirror for the whole series) |
 | Deleted event | Mirror is removed |
-| Event rescheduled inside window | Mirror updated to new time |
-| Event moved outside window | Mirror deleted |
+| Event rescheduled, still overlaps window | Mirror updated to new time |
+| Event moved entirely outside window | Mirror deleted |
 
 ### Sync behaviour in detail
 
@@ -52,26 +54,27 @@ Engine writes:      UPDATE mirror [abc123] → [existing-mirror-id]   (1 write)
 
 **Sync window enforcement**
 
-The window setting controls which events get mirrors. It is enforced on every sync run, not just the initial one:
+The window setting controls which events get mirrors. It is enforced on every sync run, not just the initial one. An event is considered "in window" if **any part of it overlaps** the configured window — so a multi-day event that started before the window but ends within it will still be mirrored.
 
 | Scenario | What happens |
 |---|---|
-| New event inside window | Mirror created |
-| Event rescheduled, still inside window | Mirror updated |
-| Event rescheduled outside window | Mirror deleted |
-| Event outside window from the start | Skipped, no mirror |
+| Event overlaps the window (even partially) | Mirror created |
+| Event rescheduled, still overlaps window | Mirror updated |
+| Event rescheduled entirely outside window | Mirror deleted |
+| Event entirely outside window | Skipped, no mirror |
 | Recurring series (any start date) | Always mirrored — the series has future occurrences |
 | Cancelled event | Mirror always deleted, regardless of window |
 
 Example — sync window is `−1 / +2 days`, today is Wednesday:
 
 ```
-Monday meeting (2 days ago)     → outside window → no mirror
-Tuesday meeting (1 day ago)     → inside window  → mirror created
-Thursday meeting (1 day ahead)  → inside window  → mirror created
-Friday meeting (2 days ahead)   → inside window  → mirror created
-Next Monday meeting (5 days)    → outside window → no mirror
-Weekly standup (recurring)      → always mirrored (has future occurrences)
+Monday meeting, ends Monday (2 days ago)       → entirely outside window → no mirror
+Monday–Wednesday meeting (starts 2 days ago)   → overlaps window        → mirror created
+Tuesday meeting (1 day ago)                    → inside window          → mirror created
+Thursday meeting (1 day ahead)                 → inside window          → mirror created
+Friday meeting (2 days ahead)                  → inside window          → mirror created
+Next Monday meeting (5 days, 1 hour)           → entirely outside window → no mirror
+Weekly standup (recurring)                     → always mirrored (has future occurrences)
 ```
 
 **Changing the sync window**
@@ -334,7 +337,7 @@ The execution log will show `CREATE mirror`, `UPDATE mirror`, and `DELETE mirror
 
 After a real sync, open the primary calendar and check:
 
-- Events from secondary calendars appear as **"Busy [domain]"** blocks
+- Events from secondary calendars appear as **"Busy [domain]"** blocks, where `domain` is the full domain of the source calendar (e.g. `Busy [opisnet.com]`, `Busy [gmail.com]`)
 - Mirror events have no title leak, no description, no attendees
 - Deleting an event on the secondary calendar causes its mirror to disappear on the next hourly run (or after a manual `runSync()`)
 

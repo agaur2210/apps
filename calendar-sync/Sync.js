@@ -14,6 +14,10 @@ function syncAll_(forceFullSync, dryRun) {
   try {
     const primaryId = s.calendars[0];
     s.calendars.slice(1).forEach((srcId, i) => {
+      if (isPausedCal_(srcId)) {
+        Logger.log('Skipping paused calendar: ' + srcId);
+        return;
+      }
       syncFrom_(srcId, [primaryId], i + 1, s.syncGroup, forceFullSync, dryRun, s.pastDays, s.futureDays);
     });
     if (!dryRun) userProps_().setProperty(PROP_LAST_SYNC, new Date().toISOString());
@@ -27,8 +31,9 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
   const tokenKey = 'syncToken_' + idx;
   const token    = p.getProperty(tokenKey);
   const label    = domainLabel_(srcId);
+  const t0       = Date.now();
 
-  const params = { showDeleted: true, singleEvents: false, maxResults: 2500 };
+  const params = { showDeleted: true, singleEvents: true, maxResults: 2500 };
 
   if (!forceFullSync && token) {
     params.syncToken = token;
@@ -38,17 +43,20 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
     params.timeMax = new Date(now.getTime() + futureDays * 86400000).toISOString();
   }
 
-  // Pre-load all mirrors into a cache to avoid per-event API calls in findMirrors_
   const mirrorCaches = {};
-  if (!dryRun) {
-    dstIds.forEach(dstId => {
-      mirrorCaches[dstId] = loadMirrorCache_(dstId);
-    });
-  }
+  dstIds.forEach(dstId => {
+    const tc = Date.now();
+    mirrorCaches[dstId] = loadMirrorCache_(dstId);
+    const cacheSize = Object.keys(mirrorCaches[dstId]).length;
+    Logger.log('[timing] loadMirrorCache ' + dstId + ': ' + (Date.now() - tc) + 'ms  (' + cacheSize + ' source keys)');
+  });
 
   let pageToken, nextToken;
   const processedIds   = new Set();
-  const pendingMasters = new Set();
+  // Map from masterId → instances[]. Instances stored so we can fall back to mirroring
+  // them individually when the master is inaccessible (free/busy calendar access).
+  const pendingMasters = new Map();
+  let   hasFbEvents    = false;
 
   do {
     if (pageToken) params.pageToken = pageToken;
@@ -57,24 +65,41 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
     try {
       resp = Calendar.Events.list(srcId, params);
     } catch (err) {
-      if (String(err).includes('410')) {
+      if (String(err).includes('410') && params.syncToken) {
         p.deleteProperty(tokenKey);
-        Logger.log('Token expired for ' + srcId + '. Cleared.');
-        return;
+        Logger.log('Token expired for ' + srcId + '. Retrying with full sync.');
+        delete params.syncToken;
+        delete params.pageToken;
+        const now = new Date();
+        params.timeMin = new Date(now.getTime() - pastDays   * 86400000).toISOString();
+        params.timeMax = new Date(now.getTime() + futureDays * 86400000).toISOString();
+        resp = Calendar.Events.list(srcId, params);
+      } else {
+        throw err;
       }
-      throw err;
     }
 
     (resp.items || []).forEach(ev => {
-      if (!ev.id) return;
+      if (!ev.id) {
+        // Free/busy access with no event ID: assign a synthetic ID from the time slot.
+        // Format avoids /_\d{8}T/ so instance-detection regex never triggers on these.
+        if (!ev.start) return;
+        const s = (ev.start.dateTime || ev.start.date || '').replace(/[^0-9T]/g, '');
+        const e = (ev.end && (ev.end.dateTime || ev.end.date) || '').replace(/[^0-9T]/g, '');
+        ev = Object.assign({}, ev, { id: 'fb_' + idx + 'x' + s + (e ? 'x' + e : '') });
+        hasFbEvents = true;
+      }
       const isInstance = ev.recurringEventId || /_\d{8}T/.test(ev.id);
       if (isInstance) {
-        const masterId = ev.recurringEventId || ev.id.replace(/_\d{8}T\w+$/, '');
-        pendingMasters.add(masterId);
+        if (ev.status !== 'cancelled') {
+          const masterId = ev.recurringEventId || ev.id.replace(/_\d{8}T\w+$/, '');
+          if (!pendingMasters.has(masterId)) pendingMasters.set(masterId, []);
+          pendingMasters.get(masterId).push(ev);
+        }
         return;
       }
       processedIds.add(ev.id);
-      processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches);
+      processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches, !params.syncToken);
     });
 
     pageToken = resp.nextPageToken;
@@ -82,15 +107,68 @@ function syncFrom_(srcId, dstIds, idx, syncGroup, forceFullSync, dryRun, pastDay
 
   } while (pageToken);
 
-  pendingMasters.forEach(masterId => {
+  pendingMasters.forEach((instances, masterId) => {
     if (processedIds.has(masterId)) return;
-    try {
-      const master = Calendar.Events.get(srcId, masterId);
-      processEvent_(master, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches);
-    } catch (_) {}
+
+    // If none of the instances have a summary, this is a free/busy calendar — the master
+    // fetch would either fail or return a master without a recurrence rule, so skip it and
+    // go straight to per-instance mirroring. Saves one API call per series.
+    const likelyFbCal = instances.every(i => !i.summary);
+
+    let master = null;
+    if (!likelyFbCal) {
+      try {
+        master = Calendar.Events.get(srcId, masterId);
+      } catch (_) {
+        master = null;
+      }
+    }
+
+    // Full access: master has a visible recurrence rule → one recurring mirror per series.
+    // Free/busy: no recurrence visible (or skipped) → mirror each instance at its actual time.
+    if (master && master.recurrence && master.recurrence.length) {
+      processEvent_(master, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches, true);
+    } else {
+      hasFbEvents = true;
+      instances.forEach(inst => {
+        if (!inst.start) return;
+        const s = (inst.start.dateTime || inst.start.date || '').replace(/[^0-9T]/g, '');
+        const e = (inst.end && (inst.end.dateTime || inst.end.date) || '').replace(/[^0-9T]/g, '');
+        const fbId = 'fb_' + idx + 'x' + s + (e ? 'x' + e : '');
+        const instWithFbId = Object.assign({}, inst, { id: fbId, recurringEventId: undefined });
+        processedIds.add(fbId);
+        processEvent_(instWithFbId, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches, true);
+      });
+    }
   });
 
-  if (nextToken && !dryRun) p.setProperty(tokenKey, nextToken);
+  Logger.log('[timing] fetch+process events: ' + (Date.now() - t0) + 'ms');
+
+  if (hasFbEvents) {
+    // Free/busy calendar: clean up mirrors for slots no longer visible, and never use
+    // sync tokens (the API can't track changes by ID, so always do a full scan).
+    const fbPrefix = 'fb_' + idx + 'x';
+    const tClean   = Date.now();
+    let   deleted  = 0;
+    dstIds.forEach(dstId => {
+      const cache = mirrorCaches[dstId];
+      if (!cache) return;
+      Object.keys(cache).forEach(cacheKey => {
+        if (cacheKey.startsWith(fbPrefix) && !processedIds.has(cacheKey)) {
+          cache[cacheKey].forEach(m => {
+            Logger.log('DELETE stale fb mirror [' + m.id + ']');
+            if (!dryRun) Calendar.Events.remove(dstId, m.id);
+            deleted++;
+          });
+        }
+      });
+    });
+    Logger.log('[timing] stale cleanup: ' + (Date.now() - tClean) + 'ms  (' + deleted + ' deleted)');
+    if (!dryRun) p.deleteProperty(tokenKey);
+  } else {
+    if (nextToken && !dryRun) p.setProperty(tokenKey, nextToken);
+  }
+  Logger.log('[timing] syncFrom_ total: ' + (Date.now() - t0) + 'ms');
   Logger.log('Synced ' + srcId + ' → ' + dstIds.length + ' calendar(s)');
 }
 
@@ -118,19 +196,22 @@ function loadMirrorCache_(dstId) {
   return cache;
 }
 
-function processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches) {
+function processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDays, mirrorCaches, fromFullScan) {
   if (!ev.id) return;
-  if (isMirror_(ev, syncGroup)) return;
+  if (isMirror_(ev)) return;
   if ((ev.eventType || 'default') !== 'default') return;
   if (ev.recurringEventId) return;
   if (!ev.start || !ev.end) return;
 
   const cancelled = ev.status === 'cancelled';
   const recurring = !!(ev.recurrence && ev.recurrence.length);
-  const inWindow  = isInWindow_(ev, pastDays, futureDays);
+  // For full scans (timeMin/timeMax) the API already filtered events to those overlapping
+  // the window, so trust it. For incremental syncs (syncToken) the API returns all changes
+  // regardless of position, so we must check manually.
+  const inWindow  = fromFullScan || isInWindow_(ev, pastDays, futureDays);
 
   dstIds.forEach(dstId => {
-    const cache = mirrorCaches ? mirrorCaches[dstId] : null;
+    const cache = mirrorCaches[dstId];
     if (cancelled || recurring || inWindow) {
       processMirror_(ev, dstId, syncGroup, label, dryRun, cache);
     } else {
@@ -140,7 +221,7 @@ function processEvent_(ev, dstIds, syncGroup, label, dryRun, pastDays, futureDay
 }
 
 function deleteStaleMirror_(ev, dstId, syncGroup, dryRun, cache) {
-  const matches = findMirrors_(ev, dstId, syncGroup, cache);
+  const matches = findMirrors_(ev, dstId, cache);
   const keep    = dedup_(matches, dstId, dryRun);
   if (keep) {
     Logger.log('DELETE stale mirror [' + keep.id + '] (outside window)');
@@ -149,7 +230,7 @@ function deleteStaleMirror_(ev, dstId, syncGroup, dryRun, cache) {
 }
 
 function processMirror_(ev, dstId, syncGroup, label, dryRun, cache) {
-  const matches = findMirrors_(ev, dstId, syncGroup, cache);
+  const matches = findMirrors_(ev, dstId, cache);
   const keep    = dedup_(matches, dstId, dryRun);
 
   if (ev.status === 'cancelled') {
@@ -163,6 +244,10 @@ function processMirror_(ev, dstId, syncGroup, label, dryRun, cache) {
   const resource = buildMirror_(ev, syncGroup, label);
 
   if (keep) {
+    if (!mirrorNeedsUpdate_(resource, keep)) {
+      Logger.log('SKIP unchanged [' + ev.id + ']');
+      return;
+    }
     Logger.log('UPDATE mirror [' + ev.id + '] → [' + keep.id + ']');
     if (!dryRun) Calendar.Events.update(resource, dstId, keep.id);
     return;
@@ -170,6 +255,21 @@ function processMirror_(ev, dstId, syncGroup, label, dryRun, cache) {
 
   Logger.log('CREATE mirror [' + ev.id + ']');
   if (!dryRun) Calendar.Events.insert(resource, dstId);
+}
+
+function mirrorNeedsUpdate_(resource, keep) {
+  // For fb_ source IDs the time is encoded in the ID — if the cache has a match the
+  // mirror times are already correct, so never issue an UPDATE.
+  const srcId = (keep.extendedProperties &&
+                 keep.extendedProperties.private &&
+                 keep.extendedProperties.private[EXT_SOURCE_ID]) || '';
+  if (srcId.startsWith('fb_')) return false;
+  const toMs = f => f ? new Date(f.dateTime || f.date).getTime() : 0;
+  if (toMs(resource.start) !== toMs(keep.start)) return true;
+  if (toMs(resource.end)   !== toMs(keep.end))   return true;
+  const evRr   = (resource.recurrence || []).join('\n');
+  const keepRr = (keep.recurrence     || []).join('\n');
+  return evRr !== keepRr;
 }
 
 function buildMirror_(ev, syncGroup, label) {
@@ -196,59 +296,23 @@ function buildMirror_(ev, syncGroup, label) {
   return resource;
 }
 
-function isMirror_(ev, syncGroup) {
+function isMirror_(ev) {
   const sh = sharedProps_(ev);
   const pr = privateProps_(ev);
+  // EXT_SYNC_GROUP is a shared (cross-account-visible) property — checking for its
+  // presence (not a specific value) prevents mirrors from any installation being
+  // re-mirrored when the add-on is installed on multiple accounts.
   return (
-    sh[EXT_SYNC_GROUP] === syncGroup ||
-    pr[EXT_BY]         === BY_VALUE  ||
+    hasText_(sh[EXT_SYNC_GROUP]) ||
+    pr[EXT_BY] === BY_VALUE      ||
     hasText_(pr[EXT_SOURCE_ID])
   );
 }
 
-// Use the pre-loaded cache when available; fall back to API calls for dryRun.
-function findMirrors_(ev, dstId, syncGroup, cache) {
-  if (cache) {
-    return (cache[ev.id] || [])
-      .filter(m => m.status !== 'cancelled')
-      .sort((a, b) => new Date(a.created || 0) - new Date(b.created || 0));
-  }
-
-  // dryRun fallback: original per-event API lookup
-  const seen = {};
-  const out  = [];
-
-  const collect = items => {
-    (items || []).forEach(m => {
-      if (m.status !== 'cancelled' && !seen[m.id]) {
-        seen[m.id] = true;
-        out.push(m);
-      }
-    });
-  };
-
-  try {
-    collect(Calendar.Events.list(dstId, {
-      privateExtendedProperty: EXT_SOURCE_ID + '=' + ev.id,
-      showDeleted: true,
-      maxResults:  50,
-    }).items);
-  } catch (_) {}
-
-  if (ev.iCalUID) {
-    try {
-      (Calendar.Events.list(dstId, {
-        iCalUID: ev.iCalUID, showDeleted: true, maxResults: 50,
-      }).items || []).forEach(m => {
-        if (m.status !== 'cancelled' && !seen[m.id] && isMirror_(m, syncGroup)) {
-          seen[m.id] = true;
-          out.push(m);
-        }
-      });
-    } catch (_) {}
-  }
-
-  return out.sort((a, b) => new Date(a.created || 0) - new Date(b.created || 0));
+function findMirrors_(ev, dstId, cache) {
+  return (cache[ev.id] || [])
+    .filter(m => m.status !== 'cancelled')
+    .sort((a, b) => new Date(a.created || 0) - new Date(b.created || 0));
 }
 
 function dedup_(matches, dstId, dryRun) {

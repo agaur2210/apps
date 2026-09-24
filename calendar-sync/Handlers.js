@@ -29,8 +29,14 @@ function onSaveSettings(e) {
     return notify_('Sync window days must be at least 1.');
   }
 
+  const prevCals = getSettings_().calendars;
   saveSettings_(calendars, pastDays, futureDays);
   clearSyncTokens_();
+  // Unpause only calendars that weren't in the previous config.
+  // Existing paused calendars keep their paused state.
+  calendars.forEach(calId => {
+    if (!prevCals.includes(calId)) setPausedCal_(calId, false);
+  });
   clearAllManagedTriggers_();
   scheduleBackground_('initialSync');
 
@@ -42,9 +48,9 @@ function onSaveSettings(e) {
 }
 
 function onStartSync() {
-  createTrigger_();
+  scheduleBackground_('startSync');
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText('Sync started.'))
+    .setNotification(CardService.newNotification().setText('Sync starting...'))
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
     .build();
@@ -60,8 +66,43 @@ function onStopSync() {
 }
 
 function onFullResync() {
+  return onRunNow();
+}
+
+function onRunNow() {
   scheduleBackground_('fullResync');
-  return notify_('Full resync starting in background...');
+  return CardService.newActionResponseBuilder()
+    .setNotification(CardService.newNotification().setText('Sync starting...'))
+    .setStateChanged(true)
+    .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
+    .build();
+}
+
+function onPauseCalendar(e) {
+  const params = ((e || {}).commonEventObject || {}).parameters || {};
+  setPausedCal_(params.calId, params.paused === 'true');
+  return CardService.newActionResponseBuilder()
+    .setStateChanged(true)
+    .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
+    .build();
+}
+
+function onPauseAll() {
+  deleteTrigger_();
+  return CardService.newActionResponseBuilder()
+    .setNotification(CardService.newNotification().setText('Sync paused.'))
+    .setStateChanged(true)
+    .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
+    .build();
+}
+
+function onResumeAll() {
+  scheduleBackground_('startSync');
+  return CardService.newActionResponseBuilder()
+    .setNotification(CardService.newNotification().setText('Sync resuming...'))
+    .setStateChanged(true)
+    .setNavigation(CardService.newNavigation().updateCard(buildMainCard_()))
+    .build();
 }
 
 function onCleanupMirrors() {
@@ -112,7 +153,8 @@ function onStopAndClear() {
   const s = getSettings_();
   const p = userProps_();
   if (s.calendars.length) {
-    p.setProperty('pending_cleanup_cals', JSON.stringify(s.calendars));
+    // Store only the primary calendar — mirrors only ever live there.
+    p.setProperty('pending_cleanup_primary', s.calendars[0]);
   }
   p.deleteProperty(PROP_CALENDARS);
   p.deleteProperty(PROP_SYNC_GROUP);

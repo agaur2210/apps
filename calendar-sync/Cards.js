@@ -118,7 +118,7 @@ function buildSetupCard_(prefill) {
     } else {
       calSection.addWidget(
         CardService.newDecoratedText()
-          .setTopLabel('Calendar 1 — primary')
+          .setTopLabel('Calendar 1 (primary)')
           .setText(val || userEmail)
           .setStartIcon(iconImg_('account_circle'))
       );

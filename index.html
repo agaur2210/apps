@@ -57,7 +57,11 @@
 <header>
   <h1>Amit Gaur</h1>
   <p class="headline">Technology Professional &middot; <span id="exp-years"></span>+ years experience</p>
-  <script>document.getElementById('exp-years').textContent = new Date().getFullYear() - 2012;</script>
+  <script>
+    var yrs = new Date().getFullYear() - 2012;
+    document.getElementById('exp-years').textContent = yrs;
+    document.querySelectorAll('.exp-years-inline').forEach(function(el){ el.textContent = yrs; });
+  </script>
   <p class="location">Madrid, Spain</p>
   <div class="links">
     <a href="https://www.linkedin.com/in/amit2210/" target="_blank">LinkedIn</a>
@@ -70,8 +74,7 @@
 
   <section class="section about">
     <h2>About</h2>
-    <p>Technology professional with over <span class="exp-years-inline"></span> years of experience building software across India and Europe.
-    <script>document.querySelectorAll('.exp-years-inline').forEach(el => el.textContent = new Date().getFullYear() - 2012);</script> Currently based in Madrid, Spain. Focused on developer tools, automation, and cloud-native applications.</p>
+    <p>Technology professional with over <span class="exp-years-inline"></span> years of experience building software across India and Europe. Currently based in Madrid, Spain. Focused on developer tools, automation, and cloud-native applications.</p>
     <p>Certified in AI/ML technologies including the Claude API by Anthropic, AWS, and distributed systems architecture.</p>
   </section>
 

@@ -20,9 +20,9 @@
 ## Step 2 — Add your calendars
 
 1. In the Calendar Sync panel, click **Settings**
-2. **Calendar 1** is your primary calendar — enter your main Google account email (e.g. `you@work.com`)
-3. Add your secondary calendars below (e.g. `you@gmail.com`, `you@client.com`)
-4. You can add up to **10 calendars**
+2. **Calendar 1** is your primary calendar — it is pre-filled with your signed-in Google account email and is read-only
+3. Add your secondary source calendars below (e.g. `you@gmail.com`, `you@client.com`)
+4. You can add up to **2 source calendars** by default (configurable via `MAX_CALENDARS` in `Constants.js`)
 
 ---
 
@@ -30,8 +30,8 @@
 
 The sync window controls how far back and forward to create busy blocks.
 
-- **Days in the past** — how many days back to mirror (default: 7)
-- **Days in the future** — how many days ahead to mirror (default: 7)
+- **Days in the past** — how many days back to mirror (default: 7, range: 1–365)
+- **Days in the future** — how many days ahead to mirror (default: 7, range: 1–365)
 
 Adjust these to match your scheduling horizon.
 

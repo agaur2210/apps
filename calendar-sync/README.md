@@ -13,7 +13,7 @@ When you work across multiple Google accounts (personal, work, client), attendee
 - **Automatic deduplication** — duplicate mirror events are detected and removed.
 - **Runs on a schedule** — a time-based trigger fires every hour, no manual action needed.
 - **Configurable sync window** — choose how many days in the past and future to keep in sync (default: 7 days each way).
-- **Up to 10 calendars** supported.
+- **Configurable calendar limit** — default is 3 calendars (1 primary + 2 sources); change `MAX_CALENDARS` in `Constants.js` to raise the limit.
 
 ### How events appear
 
@@ -28,6 +28,10 @@ The mirror title is always `Busy [<domain>]`, where `<domain>` is the full domai
 | Deleted event | Mirror is removed |
 | Event rescheduled, still overlaps window | Mirror updated to new time |
 | Event moved entirely outside window | Mirror deleted |
+
+### Per-calendar error handling
+
+If one source calendar is inaccessible (wrong email, calendar deleted, permissions revoked), that calendar is skipped and the sync continues for the remaining calendars. A completion banner is shown in the add-on panel with a human-readable error (e.g. "you@domain.com: calendar not found. Check the email address.").
 
 ### Sync behaviour in detail
 
@@ -301,12 +305,24 @@ The add-on creates an hourly trigger. The status card shows the last sync time a
 | `calendar.addons.execute` | Required for Workspace Add-ons |
 | `script.scriptapp` | Create and manage the time-based trigger |
 
+## Configuration
+
+| Constant | File | Default | Description |
+|---|---|---|---|
+| `MAX_CALENDARS` | `Constants.js` | `3` | Max calendars (1 primary + N−1 sources). Change here to adjust the limit everywhere. |
+| `DEFAULT_PAST_DAYS` | `Constants.js` | `7` | Default sync window — days in the past |
+| `DEFAULT_FUTURE_DAYS` | `Constants.js` | `7` | Default sync window — days in the future |
+
+Sync window accepts values 1–365. Calendar 1 (primary) is read-only in the UI — it is always pre-filled from the running Google account's email.
+
 ## Utility functions (run from Apps Script editor)
 
 | Function | What it does |
 |---|---|
 | `testAuth()` | Verifies auth scopes are granted; logs your email |
 | `deleteAllTriggers()` | Removes all project triggers (use to fully stop sync) |
+| `checkCalendarAccess()` | Shows access role and event visibility for each configured calendar |
+| `runDiagnostic()` | Full diagnostic: lists source events, existing mirrors, and runs a dry-run sync |
 
 ## Testing
 

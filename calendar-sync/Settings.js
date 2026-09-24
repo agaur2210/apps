@@ -11,7 +11,8 @@ function getSettings_() {
   const pastDays   = parseInt(p.getProperty(PROP_PAST_DAYS),   10) || DEFAULT_PAST_DAYS;
   const futureDays = parseInt(p.getProperty(PROP_FUTURE_DAYS), 10) || DEFAULT_FUTURE_DAYS;
   const lastSync   = p.getProperty(PROP_LAST_SYNC) || null;
-  return { calendars, triggerId, syncGroup, pastDays, futureDays, lastSync };
+  const nextRun    = p.getProperty(PROP_NEXT_RUN)  || null;
+  return { calendars, triggerId, syncGroup, pastDays, futureDays, lastSync, nextRun };
 }
 
 function saveSettings_(calendars, pastDays, futureDays) {

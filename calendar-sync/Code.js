@@ -29,6 +29,7 @@ function buildCalendarHomepage() {
 // ── Trigger entry points ──────────────────────────────────────
 
 function runSync() {
+  userProps_().setProperty(PROP_NEXT_RUN, String(Date.now() + 60 * 60 * 1000));
   syncAll_(false, false);
 }
 

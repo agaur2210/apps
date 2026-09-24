@@ -1,12 +1,14 @@
 // Only two trigger types ever exist: runSync (hourly) + runBackground (one-shot).
 const MANAGED_TRIGGERS_ = new Set(['runSync', 'runBackground']);
 
-// Deletes all managed triggers and clears the stored trigger ID.
+// Deletes all managed triggers and clears the stored trigger ID and next-run time.
 function clearAllManagedTriggers_() {
   ScriptApp.getProjectTriggers().forEach(t => {
     if (MANAGED_TRIGGERS_.has(t.getHandlerFunction())) ScriptApp.deleteTrigger(t);
   });
-  userProps_().deleteProperty(PROP_TRIGGER_ID);
+  const p = userProps_();
+  p.deleteProperty(PROP_TRIGGER_ID);
+  p.deleteProperty(PROP_NEXT_RUN);
 }
 
 // Stores `op` in properties then replaces any existing runBackground trigger with a new one.
@@ -25,7 +27,9 @@ function createTrigger_() {
     .timeBased()
     .everyHours(1)
     .create();
-  userProps_().setProperty(PROP_TRIGGER_ID, t.getUniqueId());
+  const p = userProps_();
+  p.setProperty(PROP_TRIGGER_ID, t.getUniqueId());
+  p.setProperty(PROP_NEXT_RUN, String(Date.now() + 60 * 60 * 1000));
 }
 
 function deleteTrigger_() {
@@ -37,6 +41,7 @@ function deleteTrigger_() {
     });
   }
   p.deleteProperty(PROP_TRIGGER_ID);
+  p.deleteProperty(PROP_NEXT_RUN);
 }
 
 function isTriggerAlive_(id) {

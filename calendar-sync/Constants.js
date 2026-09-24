@@ -23,3 +23,6 @@ const PROP_LAST_SYNC = 'lastSync';
 
 // Pending background operation key (used by runBackground trigger)
 const PROP_PENDING_OP = 'pendingOp';
+
+// Estimated next runSync fire time (ms epoch string)
+const PROP_NEXT_RUN = 'nextRun';

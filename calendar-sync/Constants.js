@@ -15,8 +15,8 @@ const EXT_BY         = 'cb_by';
 const EXT_SYNC_GROUP = 'cb_sync_group';
 const BY_VALUE       = 'calendar-bridge';
 
-// Max number of calendar input fields in the setup form
-const MAX_LOOP = 10;
+// Max number of calendars (1 primary + N-1 sources). Change here to adjust the limit.
+const MAX_CALENDARS = 3;
 
 // Last sync timestamp key
 const PROP_LAST_SYNC = 'lastSync';
@@ -29,3 +29,6 @@ const PROP_NEXT_RUN = 'nextRun';
 
 // JSON array of calendar IDs that are individually paused
 const PROP_PAUSED_CALS = 'pausedCals';
+
+// Last background job result: JSON { ok, op, msg?, ts }
+const PROP_LAST_OP_RESULT = 'lastOpResult';

@@ -36,7 +36,7 @@ function buildMainCard_() {
 function errorCard_(e) {
   return CardService.newCardBuilder()
     .setName('error')
-    .setHeader(CardService.newCardHeader().setTitle('Calendar Bridge — Error'))
+    .setHeader(CardService.newCardHeader().setTitle('Calendar Sync — Error'))
     .addSection(
       CardService.newCardSection()
         .addWidget(CardService.newTextParagraph().setText(String(e)))
@@ -140,7 +140,7 @@ function buildSetupCard_(prefill) {
     .setName('setup')
     .setHeader(
       CardService.newCardHeader()
-        .setTitle('Calendar Bridge')
+        .setTitle('Calendar Sync')
         .setSubtitle('Multi-calendar sync')
     )
     .addSection(calSection)
@@ -225,7 +225,7 @@ function buildStatusCard_(s) {
     .setName('status')
     .setHeader(
       CardService.newCardHeader()
-        .setTitle('Calendar Bridge')
+        .setTitle('Calendar Sync')
         .setSubtitle(running ? 'Active' : pending ? 'Running...' : 'Paused')
     )
     .addSection(calSection)

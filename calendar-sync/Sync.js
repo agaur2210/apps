@@ -1,13 +1,13 @@
 function syncAll_(forceFullSync, dryRun) {
   const s = getSettings_();
   if (s.calendars.length < 2 || !s.syncGroup) {
-    Logger.log('Calendar Bridge: not configured.');
+    Logger.log('Calendar Sync: not configured.');
     return;
   }
 
   const lock = LockService.getUserLock();
   if (!lock.tryLock(30000)) {
-    Logger.log('Calendar Bridge: another sync in progress, skipping.');
+    Logger.log('Calendar Sync: another sync in progress, skipping.');
     return;
   }
 

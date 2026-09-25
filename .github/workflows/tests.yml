@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'calendar-sync/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'calendar-sync/**'
+
+jobs:
+  unit-tests:
+    name: Unit tests (Node.js)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run calendar-sync unit tests
+        run: node calendar-sync/test-runner.js

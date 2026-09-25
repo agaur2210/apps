@@ -17,16 +17,34 @@
 
 ---
 
-## Step 2 — Add your calendars
+## Step 2 — Share your secondary calendars with your primary account
+
+Before Calendar Sync can read a secondary calendar, that calendar must be shared with your primary Google account.
+
+For **each** secondary calendar you want to sync:
+
+1. Sign in to Google Calendar with the **secondary** account (e.g. `you@gmail.com`)
+2. In the left sidebar, find the calendar → click the **three-dot menu (⋮)** → **Settings and sharing**
+3. Under **Share with specific people or groups**, click **+ Add people and groups**
+4. Enter your **primary** account email (e.g. `you@work.com`)
+5. Set the permission to **See all event details**
+6. Click **Send**
+7. Switch back to your primary account — accept the sharing invitation if prompted
+
+Repeat for every additional secondary calendar. Once shared, Calendar Sync can read events from those calendars.
+
+---
+
+## Step 3 — Add your calendars
 
 1. In the Calendar Sync panel, click **Settings**
 2. **Calendar 1** is your primary calendar — it is pre-filled with your signed-in Google account email and is read-only
 3. Add your secondary source calendars below (e.g. `you@gmail.com`, `you@client.com`)
-4. You can add up to **2 source calendars** by default (configurable via `MAX_CALENDARS` in `Constants.js`)
+4. You can add up to **2 source calendars**
 
 ---
 
-## Step 3 — Set your sync window
+## Step 4 — Set your sync window
 
 The sync window controls how far back and forward to create busy blocks.
 
@@ -37,7 +55,7 @@ Adjust these to match your scheduling horizon.
 
 ---
 
-## Step 4 — Save and start
+## Step 5 — Save and start
 
 Click **Save & Start Sync**.
 

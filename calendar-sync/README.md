@@ -13,7 +13,7 @@ When you work across multiple Google accounts (personal, work, client), attendee
 - **Automatic deduplication** — duplicate mirror events are detected and removed.
 - **Runs on a schedule** — a time-based trigger fires every hour, no manual action needed.
 - **Configurable sync window** — choose how many days in the past and future to keep in sync (default: 7 days each way).
-- **Configurable calendar limit** — default is 3 calendars (1 primary + 2 sources); change `MAX_CALENDARS` in `Constants.js` to raise the limit.
+- **Configurable calendar limit** — supports up to 3 calendars (1 primary + 2 sources); change `MAX_CALENDARS` in `Constants.js` to adjust the limit.
 
 ### How events appear
 

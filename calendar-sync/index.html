@@ -72,8 +72,8 @@
         <p>An hourly trigger keeps calendars in sync with no manual action required.</p>
       </div>
       <div class="feature">
-        <h3>Up to 10 calendars</h3>
-        <p>Connect your work, personal, and client calendars in one place.</p>
+        <h3>Up to 2 source calendars</h3>
+        <p>Connect your work, personal, and client calendars — up to 2 source calendars.</p>
       </div>
       <div class="feature">
         <h3>Incremental sync</h3>
@@ -98,17 +98,30 @@
     <h3>Step 1 — Install the add-on</h3>
     <p>Open the Google Workspace™ Marketplace and search for <strong>Calendar Sync</strong>. Click <strong>Install</strong> and follow the prompts. Grant the requested permissions when asked. Open Google Calendar™ — a <strong>Calendar Sync</strong> panel appears in the right sidebar.</p>
 
-    <h3>Step 2 — Add your calendars</h3>
-    <p>In the Calendar Sync panel, click <strong>Settings</strong>. <strong>Calendar 1</strong> is your primary calendar — enter your main Google Account™ email (e.g. <code>you@work.com</code>). Add your secondary calendars below (e.g. <code>you@gmail.com</code>, <code>you@client.com</code>). You can add up to <strong>10 calendars</strong>.</p>
+    <h3>Step 2 — Share your secondary calendars with your primary account</h3>
+    <p>Before Calendar Sync can read a secondary calendar, that calendar must be shared with your primary Google Account™. Do this for <strong>each</strong> secondary calendar you want to sync:</p>
+    <ol>
+      <li>Sign in to Google Calendar™ with the <strong>secondary</strong> account (e.g. <code>you@gmail.com</code>)</li>
+      <li>In the left sidebar, find the calendar → click the <strong>three-dot menu (⋮)</strong> → <strong>Settings and sharing</strong></li>
+      <li>Under <strong>Share with specific people or groups</strong>, click <strong>+ Add people and groups</strong></li>
+      <li>Enter your <strong>primary</strong> account email (e.g. <code>you@work.com</code>)</li>
+      <li>Set the permission to <strong>See all event details</strong></li>
+      <li>Click <strong>Send</strong></li>
+      <li>Switch back to your primary account and accept the sharing invitation if prompted</li>
+    </ol>
+    <p>Repeat for every additional secondary calendar before proceeding.</p>
 
-    <h3>Step 3 — Set your sync window</h3>
+    <h3>Step 3 — Add your calendars</h3>
+    <p>In the Calendar Sync panel, click <strong>Settings</strong>. <strong>Calendar 1</strong> is your primary calendar — enter your main Google Account™ email (e.g. <code>you@work.com</code>). Add your secondary calendars below (e.g. <code>you@gmail.com</code>, <code>you@client.com</code>). You can add up to <strong>2 source calendars</strong>.</p>
+
+    <h3>Step 4 — Set your sync window</h3>
     <p>The sync window controls how far back and forward to create busy blocks.</p>
     <ul>
       <li><strong>Days in the past</strong> — how many days back to mirror (default: 7)</li>
       <li><strong>Days in the future</strong> — how many days ahead to mirror (default: 7)</li>
     </ul>
 
-    <h3>Step 4 — Save and start</h3>
+    <h3>Step 5 — Save and start</h3>
     <p>Click <strong>Save &amp; Start Sync</strong>. The add-on will run a full sync immediately, create <strong>"Busy [domain]"</strong> blocks on your primary calendar, and set up an hourly trigger to keep everything in sync automatically.</p>
 
     <h3>What the busy blocks look like</h3>
@@ -156,7 +169,7 @@
 
     <h3>How We Use Your Information</h3>
     <p>Information obtained from Google Calendar™ is used solely to provide the calendar synchronization functionality requested by the user. Calendar information is used to determine busy periods and to create or remove corresponding "Busy" blocks in configured calendars.</p>
-    <p>Your information is not used for advertising, profiling, marketing, analytics, artificial intelligence or machine-learning training, or any unrelated purpose.</p>
+    <p>Your information is not used for advertising, profiling, marketing, analytics, or any unrelated purpose.</p>
 
     <h3>Data Storage</h3>
     <p>Calendar Sync does not operate an external application server or database. Configuration information required by the add-on is stored using Google Apps Script™ User Properties and is associated with the individual Google Account™ using the add-on. Calendar event information is processed within Google's infrastructure and is not stored in an external database controlled by the developer. Calendar Sync does not maintain copies of users' calendar event content outside Google services.</p>

@@ -81,6 +81,9 @@ function runBackground() {
         deleteMirrorsByQuery_(primaryId, { privateExtendedProperty: EXT_BY + '=' + BY_VALUE });
         if (sg) deleteMirrorsByQuery_(primaryId, { sharedExtendedProperty: EXT_SYNC_GROUP + '=' + sg });
       }
+      // Belt-and-suspenders: delete any triggers that were created in the window
+      // between onStopAndClear scheduling this job and runBackground firing.
+      clearAllManagedTriggers_();
     }
     p.setProperty(PROP_LAST_OP_RESULT, JSON.stringify({ ok: true, op: op, ts: Date.now() }));
   } catch (err) {

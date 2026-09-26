@@ -166,8 +166,8 @@
       <tbody>
         <tr>
           <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">userinfo.email</td>
-          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Pre-fills Calendar 1 (the primary calendar) with the signed-in account's email so the user does not have to type it manually and cannot accidentally set it to the wrong account.</td>
-          <td style="padding:10px 8px;border:1px solid #e0e0e0;">No narrower scope exists that provides the user's email address. Without it the add-on cannot identify which calendar is "primary."</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Pre-fills the Calendar 1 field in the setup form with the signed-in account's email address (<code>Session.getActiveUser().getEmail()</code>). This prevents the user from accidentally entering a different account's email as their primary calendar, which would cause mirror events to be written to the wrong calendar.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Without this scope, Calendar 1 would be a blank text field. The user could type any email address, including one they do not own. Pre-filling with the verified OAuth identity ensures Calendar 1 is always the account the user authenticated as. No narrower scope provides the authenticated user's email address.</td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">calendar.calendarlist.readonly</td>
@@ -176,8 +176,20 @@
         </tr>
         <tr>
           <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">calendar.events</td>
-          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Reads events from source calendars to find busy periods, and creates, updates, and deletes the "Busy [domain]" mirror events on the primary calendar. This is the core sync functionality.</td>
-          <td style="padding:10px 8px;border:1px solid #e0e0e0;"><code>calendar.events.readonly</code> is insufficient because the add-on must write and delete the mirror events it creates on the primary calendar. <code>calendar.freebusy</code> is insufficient because it does not provide event IDs needed to track and deduplicate mirrors, and does not support sync tokens.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Reads events from source calendars to determine busy periods, and creates, updates, and deletes "Busy [domain]" mirror events on the primary calendar. This is the core sync functionality.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">
+            <strong>Why <code>calendar.events.readonly</code> is insufficient:</strong> The add-on must write mirror events to the primary calendar (<code>Events.insert</code>), update them when source event times change (<code>Events.update</code>), and delete them when source events are cancelled or moved outside the sync window (<code>Events.remove</code>). Read-only scopes do not permit any of these write operations.<br><br>
+            <strong>Why <code>calendar.events.freebusy</code> is insufficient:</strong> The add-on reads the following specific fields from source events that <code>calendar.events.freebusy</code> does not return:
+            <ul style="margin:8px 0 0 16px;">
+              <li><code>event.id</code> — used to key each mirror event to its source; not returned under <code>calendar.events.freebusy</code></li>
+              <li><code>event.extendedProperties</code> — used to identify which events on the primary calendar are mirrors created by Calendar Sync; not returned under <code>calendar.events.freebusy</code></li>
+              <li><code>event.recurrence</code> — used to copy recurrence rules to the mirror so a single recurring series produces one mirror; not returned under <code>calendar.events.freebusy</code></li>
+              <li><code>event.recurringEventId</code> — used to detect individual instances vs. master recurring events; not returned under <code>calendar.events.freebusy</code></li>
+              <li><code>event.status = "cancelled"</code> — used to detect deleted source events so their mirrors can be removed; cancelled events are not returned under <code>calendar.events.freebusy</code></li>
+              <li><code>syncToken</code> (incremental sync) — the <code>syncToken</code> parameter on <code>Events.list</code> is not supported under <code>calendar.events.freebusy</code>, making efficient incremental sync impossible</li>
+            </ul>
+            Additionally, <code>calendar.events.freebusy</code> is read-only and cannot be used for any of the required write operations listed above.
+          </td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">calendar.addons.execute</td>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Git Helper Settings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      width: 320px;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      color: #1f2328;
+      background: #fff;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #0078d4;
+      color: #fff;
+    }
+    header img { flex-shrink: 0; width: 20px; height: 20px; }
+    header h1 { margin: 0; font-size: 14px; font-weight: 600; }
+
+    .body { padding: 16px; }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #1f2328;
+    }
+    .field .hint {
+      font-size: 11px;
+      color: #57606a;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #1f2328;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0078d4;
+      box-shadow: 0 0 0 2px rgba(0,120,212,.2);
+    }
+    input:disabled {
+      background: #f6f8fa;
+      color: #8c959f;
+      cursor: not-allowed;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .toggle-label { font-weight: 600; }
+
+    /* Toggle switch */
+    .toggle {
+      position: relative;
+      width: 38px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #d0d7de;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle input:checked + .toggle-track { background: #0078d4; }
+    .toggle input:disabled + .toggle-track { cursor: not-allowed; opacity: 0.5; }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      pointer-events: none;
+    }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
+
+    .save-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button.save {
+      flex: 1;
+      padding: 8px;
+      background: #0078d4;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button.save:hover { background: #106ebe; }
+
+    .status {
+      font-size: 12px;
+      color: #1a7f37;
+      min-width: 60px;
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid #e8eaed;
+      margin: 16px 0 14px;
+    }
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #57606a;
+      margin-bottom: 12px;
+    }
+    .section-heading .ai-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6f42c1, #0078d4);
+      flex-shrink: 0;
+    }
+
+    .pro-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      background: linear-gradient(135deg, #6f42c1, #0078d4);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 10px;
+      letter-spacing: 0.03em;
+      margin-left: auto;
+    }
+
+    .license-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 5px;
+    }
+    .license-status.valid   { color: #1a7f37; }
+    .license-status.invalid { color: #8c959f; }
+    .license-status.author  { color: #6f42c1; }
+
+    select {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #1f2328;
+      background: #fff;
+    }
+    select:focus {
+      outline: none;
+      border-color: #0078d4;
+      box-shadow: 0 0 0 2px rgba(0,120,212,.2);
+    }
+
+    .ai-fields { margin-top: 10px; }
+    .ai-fields.hidden { display: none; }
+
+    .ai-locked {
+      font-size: 12px;
+      color: #8c959f;
+      background: #f6f8fa;
+      border: 1px dashed #d0d7de;
+      border-radius: 6px;
+      padding: 10px 12px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    footer {
+      padding: 8px 16px 12px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 11px;
+      color: #8c959f;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="../icons/icon48.png" alt="Git Helper" />
+    <h1>Git Helper for Azure DevOps</h1>
+  </header>
+
+  <div class="body">
+    <div class="field">
+      <label for="pat-token">Personal Access Token (PAT)</label>
+      <input type="password" id="pat-token" placeholder="Paste your Azure DevOps PAT" autocomplete="off" />
+      <p class="hint">
+        Required for private repositories. Needs <strong>Code (Read)</strong> scope.<br>
+        Stored locally in your browser only.
+      </p>
+    </div>
+
+    <div class="field">
+      <div class="toggle-row">
+        <span class="toggle-label">Include merge commits</span>
+        <label class="toggle">
+          <input type="checkbox" id="include-merges" />
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+      <p class="hint">Default: Off — merge commits are excluded from generated descriptions.</p>
+    </div>
+
+    <div class="field">
+      <div class="toggle-row">
+        <span class="toggle-label">Group changes by category</span>
+        <label class="toggle">
+          <input type="checkbox" id="group-by-category" />
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+      <p class="hint">Groups Features, Bug Fixes, Refactoring etc. for larger PRs (6+ commits).</p>
+    </div>
+
+    <hr class="section-divider" />
+
+    <div class="section-heading">
+      <span class="ai-dot"></span>
+      AI Generation
+      <span class="pro-badge">✦ PRO</span>
+    </div>
+
+    <div class="field">
+      <label for="license-key">License Key</label>
+      <input type="text" id="license-key" placeholder="GHADO-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" />
+      <div class="license-status invalid" id="license-status">⊘ Not licensed — AI features locked</div>
+    </div>
+
+    <div id="ai-locked-msg" class="ai-locked">
+      Enter a valid license key above to unlock AI-powered descriptions.
+    </div>
+
+    <div id="ai-section" style="display:none">
+      <div class="field">
+        <div class="toggle-row">
+          <span class="toggle-label">Enable AI descriptions</span>
+          <label class="toggle">
+            <input type="checkbox" id="ai-enabled" />
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+        <p class="hint">Uses AI to refine the template draft into a richer summary.</p>
+      </div>
+
+      <div class="ai-fields hidden" id="ai-fields">
+        <div class="field">
+          <label for="ai-provider">Provider</label>
+          <select id="ai-provider">
+            <option value="openai">OpenAI (GPT-4o mini)</option>
+            <option value="anthropic">Anthropic (Claude Haiku)</option>
+            <option value="azure-openai">Azure OpenAI</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="ai-api-key">API Key</label>
+          <input type="password" id="ai-api-key" placeholder="sk-… or Anthropic key" autocomplete="off" />
+          <p class="hint">Stored locally. Never sent anywhere except the selected provider.</p>
+        </div>
+
+        <div class="field">
+          <label for="ai-model">Model <span style="font-weight:400;color:#8c959f">(leave blank for default)</span></label>
+          <input type="text" id="ai-model" placeholder="e.g. gpt-4o, claude-sonnet-5" autocomplete="off" />
+        </div>
+
+        <div class="field" id="azure-endpoint-field" style="display:none">
+          <label for="ai-azure-endpoint">Azure OpenAI Endpoint</label>
+          <input type="text" id="ai-azure-endpoint" placeholder="https://my-resource.openai.azure.com" autocomplete="off" />
+        </div>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button class="save" id="save-btn">Save Settings</button>
+      <span class="status" id="status-msg"></span>
+    </div>
+  </div>
+
+  <footer>Git Helper v1.0 · Works on dev.azure.com</footer>
+
+  <script src="../dist/popup.js"></script>
+</body>
+</html>

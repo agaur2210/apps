@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git Helper for Azure DevOps — Chrome Extension</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #202124; background: #fff; line-height: 1.6; }
+    a { color: #0078d4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    header { background: #0078d4; color: #fff; padding: 48px 24px; text-align: center; }
+    header img { width: 96px; height: 96px; border-radius: 20px; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto; }
+    header h1 { font-size: 2rem; font-weight: 600; margin-bottom: 8px; }
+    header p { font-size: 1.1rem; opacity: 0.9; max-width: 560px; margin: 0 auto; }
+
+    nav { background: #f8f9fa; border-bottom: 1px solid #e0e0e0; padding: 12px 24px; text-align: center; }
+    nav a { margin: 0 16px; font-size: 0.95rem; color: #0078d4; font-weight: 500; }
+
+    .container { max-width: 780px; margin: 0 auto; padding: 40px 24px; }
+
+    .section { margin-bottom: 64px; }
+    .section h2 { font-size: 1.5rem; font-weight: 600; color: #0078d4; border-bottom: 2px solid #e1f0fb; padding-bottom: 8px; margin-bottom: 24px; }
+    .section h3 { font-size: 1.05rem; font-weight: 600; margin: 24px 0 8px; color: #202124; }
+    .section p { margin-bottom: 12px; color: #3c4043; }
+    .section ul, .section ol { margin: 8px 0 12px 20px; color: #3c4043; }
+    .section ul li, .section ol li { margin-bottom: 4px; }
+    .section code { background: #f1f3f4; padding: 1px 5px; border-radius: 4px; font-size: 0.88rem; }
+
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+    .feature { background: #f8f9fa; border-radius: 8px; padding: 20px; }
+    .feature h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; color: #202124; margin-top: 0; }
+    .feature p { font-size: 0.9rem; color: #5f6368; margin: 0; }
+
+    .meta { font-size: 0.85rem; color: #80868b; margin-bottom: 20px; }
+
+    .notice { background: #e1f0fb; border-left: 4px solid #0078d4; padding: 16px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+    .notice strong { display: block; margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    thead tr { background: #f8f9fa; }
+    th { text-align: left; padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 0.9rem; }
+    td { padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 0.9rem; color: #3c4043; vertical-align: top; }
+    td code { background: #f1f3f4; padding: 1px 5px; border-radius: 4px; font-size: 0.82rem; }
+
+    footer { background: #f8f9fa; border-top: 1px solid #e0e0e0; text-align: center; padding: 24px; font-size: 0.85rem; color: #5f6368; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="icons/icon128.png" alt="Git Helper icon">
+  <h1>Git Helper for Azure DevOps</h1>
+  <p>Generate a professional PR description from your commit messages — directly on any Azure DevOps Pull Request page.</p>
+</header>
+
+<nav>
+  <a href="#about">About</a>
+  <a href="#installation">Installation</a>
+  <a href="#permissions">Permissions</a>
+  <a href="#support">Support</a>
+  <a href="#privacy-policy">Privacy Policy</a>
+  <a href="#terms-of-service">Terms of Service</a>
+</nav>
+
+<div class="container">
+
+  <!-- ABOUT -->
+  <section id="about" class="section">
+    <h2>About Git Helper for Azure DevOps</h2>
+    <p>Git Helper is a Chrome Extension (Manifest V3) that reads the commits on an Azure DevOps Pull Request and generates a clean, structured PR description from them. It works on <strong>dev.azure.com</strong> and <strong>*.visualstudio.com</strong> and re-mounts automatically as you navigate between PRs in Azure DevOps's single-page application.</p>
+
+    <div class="features">
+      <div class="feature">
+        <h3>Commit-driven</h3>
+        <p>Reads commits directly from the Azure DevOps REST API — no copy-paste required.</p>
+      </div>
+      <div class="feature">
+        <h3>Noise filtering</h3>
+        <p>Automatically excludes merge commits and low-value messages like <em>wip</em>, <em>fix typo</em>, and <em>rebase</em>.</p>
+      </div>
+      <div class="feature">
+        <h3>Conventional Commits</h3>
+        <p>Recognises <code>feat</code>, <code>fix</code>, <code>refactor</code>, <code>perf</code>, <code>test</code>, and more — converts them into readable sentences.</p>
+      </div>
+      <div class="feature">
+        <h3>AI refinement (Pro)</h3>
+        <p>Optionally refines the generated draft using OpenAI, Anthropic, or Azure OpenAI — requires a license key.</p>
+      </div>
+    </div>
+
+    <p>Source code: <a href="https://github.com/agaur2210/apps/tree/main/azure-devops-git-helper" target="_blank">github.com/agaur2210/apps</a></p>
+  </section>
+
+  <!-- INSTALLATION -->
+  <section id="installation" class="section">
+    <h2>Installation</h2>
+
+    <h3>Step 1 — Install from the Chrome Web Store</h3>
+    <p>
+      <a href="https://chrome.google.com/webstore/detail/git-helper-for-azure-devo" target="_blank"
+         style="display:inline-flex;align-items:center;gap:10px;background:#0078d4;color:#fff;padding:12px 22px;border-radius:8px;font-weight:600;font-size:0.95rem;text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Add to Chrome — it's free
+      </a>
+    </p>
+    <p style="margin-top:12px;">Click <strong>Add to Chrome</strong> on the store page, then confirm by clicking <strong>Add extension</strong> in the dialog. The Git Helper icon will appear in your toolbar immediately — no restart required.</p>
+
+    <h3>Step 2 — Pin the extension (recommended)</h3>
+    <p>Click the puzzle-piece icon (Extensions) in the Chrome toolbar, find <strong>Git Helper for Azure DevOps</strong>, and click the pin icon to keep it visible in the toolbar.</p>
+
+    <h3>Step 3 — Configure (optional)</h3>
+    <p>Click the toolbar icon to open the settings popup. All settings are optional unless noted:</p>
+    <table>
+      <thead><tr><th>Setting</th><th>When you need it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>PAT token</strong></td><td>Private repositories — needs <strong>Code (Read)</strong> scope. Public repos work without it.</td></tr>
+        <tr><td><strong>License key</strong></td><td>Required to unlock AI description refinement (Pro feature).</td></tr>
+        <tr><td><strong>AI provider &amp; API key</strong></td><td>Shown after entering a valid license key. Bring your own key from OpenAI, Anthropic, or Azure OpenAI.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Step 4 — Generate a PR description</h3>
+    <ol>
+      <li>Open any Pull Request on <code>dev.azure.com</code> or <code>*.visualstudio.com</code></li>
+      <li>Click the <strong>PR Description</strong> button that appears in the bottom-right corner of the page</li>
+      <li>A panel opens and fetches the commits for the PR</li>
+      <li>Review the commit checklist — uncheck anything you want to exclude</li>
+      <li>Click <strong>Generate Description</strong></li>
+      <li>Edit the output in the text area, then click <strong>Copy</strong></li>
+      <li>Paste the description into the Azure DevOps PR description field</li>
+    </ol>
+
+    <h3>Commit badges</h3>
+    <table>
+      <thead><tr><th>Badge</th><th>Meaning</th><th>Default</th></tr></thead>
+      <tbody>
+        <tr><td><strong>merge</strong></td><td>Identified as a merge commit</td><td>Unchecked</td></tr>
+        <tr><td><strong>noise</strong></td><td>Low-value commit (wip, fix typo, rebase…)</td><td>Unchecked</td></tr>
+        <tr><td><em>none</em></td><td>Meaningful commit</td><td>Checked</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Updating the extension</h3>
+    <p>Chrome updates extensions from the Web Store automatically. To force an immediate update, go to <code>chrome://extensions</code> and click <strong>Update</strong> in the top-left corner.</p>
+
+    <h3>Removing the extension</h3>
+    <p>Go to <code>chrome://extensions</code>, find <strong>Git Helper for Azure DevOps</strong>, and click <strong>Remove</strong>. All locally stored settings (PAT token, license key, API key) are deleted along with the extension.</p>
+  </section>
+
+  <!-- PERMISSIONS -->
+  <section id="permissions" class="section">
+    <h2>Permissions Requested and Why</h2>
+    <p>Git Helper requests only the minimum permissions required to provide its functionality. The following table explains each permission, the feature that requires it, and why a narrower permission would not be viable.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Permission</th>
+          <th>User-facing feature</th>
+          <th>Why narrower is not viable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>storage</code></td>
+          <td>Saves the user's settings (PAT token, toggles, license key, AI provider and API key) to <code>chrome.storage.local</code> so they persist across browser sessions and do not need to be re-entered.</td>
+          <td>Without this permission, settings reset every time the extension is loaded. There is no narrower scope for local, per-extension storage.</td>
+        </tr>
+        <tr>
+          <td><code>host_permissions</code>:<br><code>dev.azure.com/*</code><br><code>*.visualstudio.com/*</code></td>
+          <td>Injects the content script into Azure DevOps PR pages and calls the Azure DevOps REST API (<code>/pullRequests/{id}/commits</code>) to fetch the commit list for the open PR.</td>
+          <td>Content scripts can only be injected into pages that match their declared host permissions. Without these permissions, the extension cannot read the page URL, inject the PR Description button, or call the Azure DevOps API from within the page context. Narrower patterns (e.g. only <code>*/pullrequest/*</code>) are not supported by Chrome's host permission syntax for content scripts.</td>
+        </tr>
+        <tr>
+          <td><code>host_permissions</code>:<br><code>api.openai.com/*</code><br><code>api.anthropic.com/*</code><br><code>*.openai.azure.com/*</code></td>
+          <td>Sends the generated draft description to the user's chosen AI provider for refinement — only when the AI feature is enabled, a license key is present, and the user clicks Generate. The AI provider is selected and configured by the user in the settings popup.</td>
+          <td>Chrome extensions cannot call cross-origin URLs from content scripts unless those origins are declared in <code>host_permissions</code>. These three entries cover OpenAI, Anthropic, and Azure OpenAI. Only the provider the user selects is ever contacted. If AI is disabled, none of these permissions are exercised.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="notice">
+      <strong>No background permissions</strong>
+      Git Helper does not use <code>tabs</code>, <code>history</code>, <code>cookies</code>, <code>webRequest</code>, <code>bookmarks</code>, <code>identity</code>, or any other sensitive Chrome API. It has no access to pages outside of Azure DevOps.
+    </div>
+  </section>
+
+  <!-- PRIVACY POLICY -->
+  <section id="privacy-policy" class="section">
+    <h2>Privacy Policy</h2>
+    <p class="meta">Last updated: September 27, 2026</p>
+
+    <h3>Overview</h3>
+    <p>Git Helper for Azure DevOps is a Chrome Extension that generates PR descriptions from commit messages on Azure DevOps Pull Request pages. This policy explains what data the extension accesses, how it is used, and what leaves your browser.</p>
+
+    <h3>Data Stored Locally</h3>
+    <p>The following values are saved to <code>chrome.storage.local</code> — stored exclusively in your browser on your device, never transmitted to any server operated by this extension:</p>
+    <ul>
+      <li><strong>Personal Access Token (PAT)</strong> — used to authenticate calls to the Azure DevOps REST API for private repositories. Never sent anywhere other than <code>dev.azure.com</code> or <code>*.visualstudio.com</code>.</li>
+      <li><strong>License key</strong> — validated locally in the extension to gate the AI feature. Never transmitted to any server.</li>
+      <li><strong>AI API key</strong> — your key for the AI provider you select (OpenAI, Anthropic, or Azure OpenAI). Never sent anywhere other than the selected provider's API endpoint.</li>
+      <li><strong>Settings</strong> (include merge commits, group by category, AI provider, AI model, Azure endpoint) — preferences stored locally only.</li>
+    </ul>
+    <p>None of this data is sent to any server operated by the developer of this extension.</p>
+
+    <h3>Data Sent to Azure DevOps</h3>
+    <p>When you open the PR Description panel, the extension calls the Azure DevOps REST API to retrieve the list of commits for the open Pull Request. This call is made directly from your browser to Azure DevOps using the same session cookies your browser already holds (or your configured PAT token). No intermediate server is involved.</p>
+
+    <h3>Data Sent to AI Providers (Pro feature only)</h3>
+    <p>When the AI feature is enabled and you click Generate Description, the extension sends the following to your configured AI provider (OpenAI, Anthropic, or Azure OpenAI):</p>
+    <ul>
+      <li>The selected commit messages</li>
+      <li>The PR title, source branch name, and target branch name (scraped from the Azure DevOps page)</li>
+      <li>The template-generated draft description</li>
+    </ul>
+    <p>No source code, file diffs, PAT tokens, API keys, personal account information, or any other data are included in the AI request. The AI provider you choose processes this data according to their own privacy policy and terms of service.</p>
+    <p>When the AI feature is disabled (or no license key is entered), <strong>no data is sent to any AI provider</strong> — all processing happens locally in your browser.</p>
+
+    <h3>Data Not Collected</h3>
+    <p>Git Helper does not collect, transmit, or store:</p>
+    <ul>
+      <li>Usage analytics or telemetry</li>
+      <li>Browsing history</li>
+      <li>Identifiers, email addresses, or account information</li>
+      <li>Source code, file contents, or repository metadata</li>
+      <li>Any data from pages other than Azure DevOps PR pages</li>
+    </ul>
+
+    <h3>Third-Party Services</h3>
+    <p>The only third-party services the extension may contact are:</p>
+    <ul>
+      <li><strong>Azure DevOps REST API</strong> (<code>dev.azure.com</code> / <code>*.visualstudio.com</code>) — to fetch commits for the open PR.</li>
+      <li><strong>Your chosen AI provider</strong> (<code>api.openai.com</code>, <code>api.anthropic.com</code>, or <code>*.openai.azure.com</code>) — only when AI is enabled and you click Generate.</li>
+    </ul>
+    <p>No analytics, advertising, tracking, or data-broker services are used.</p>
+
+    <h3>Data Retention and Deletion</h3>
+    <p>All data stored by Git Helper lives in <code>chrome.storage.local</code> on your device. You can delete it at any time by:</p>
+    <ul>
+      <li>Clearing the extension's storage via <code>chrome://extensions</code> → Git Helper → <strong>Clear storage</strong></li>
+      <li>Removing the extension from Chrome</li>
+    </ul>
+    <p>No data associated with you is retained by the developer after the extension is removed.</p>
+
+    <h3>Contact</h3>
+    <p>For questions about this Privacy Policy, contact: <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a></p>
+  </section>
+
+  <!-- TERMS OF SERVICE -->
+  <section id="terms-of-service" class="section">
+    <h2>Terms of Service</h2>
+    <p class="meta">Last updated: September 27, 2026</p>
+
+    <h3>1. Acceptance of Terms</h3>
+    <p>By installing, accessing, or using Git Helper for Azure DevOps, you agree to these Terms of Service. If you do not agree, do not install or use the extension.</p>
+
+    <h3>2. Description of the Service</h3>
+    <p>Git Helper for Azure DevOps is a Chrome Extension that reads commit messages from Azure DevOps Pull Requests and generates a structured PR description. An optional AI refinement feature (Pro) uses a third-party AI provider of your choice to improve the generated output. The extension is intended as a productivity aid — it should not be relied upon as the sole source of important PR documentation.</p>
+
+    <h3>3. Free and Pro Features</h3>
+    <p>The core template-based description generator is provided free of charge. AI-powered refinement is a Pro feature that requires a valid license key. The developer reserves the right to modify pricing, introduce new tiers, or change the scope of free features in the future. Where reasonably possible, users will be informed before such changes take effect.</p>
+
+    <h3>4. License Key</h3>
+    <p>Pro license keys are issued by the developer and are for personal use only. You may not share, resell, or redistribute your license key. The developer reserves the right to revoke a license key at any time if it is found to be used in violation of these terms.</p>
+
+    <h3>5. Third-Party AI Services</h3>
+    <p>When AI refinement is enabled, commit data is sent to the AI provider you configure. Your use of those services is governed by their own terms of service and privacy policies. The developer of Git Helper is not responsible for the behaviour, outputs, data handling, pricing, or availability of any third-party AI provider.</p>
+
+    <h3>6. No Warranty</h3>
+    <p>Git Helper is provided "as is" and "as available" without warranties of any kind, whether express or implied. The developer does not guarantee that:</p>
+    <ul>
+      <li>generated descriptions will always be accurate, complete, or suitable for your PR;</li>
+      <li>the extension will operate without interruptions or errors;</li>
+      <li>the extension will remain compatible with future versions of Chrome, Azure DevOps, or AI provider APIs; or</li>
+      <li>AI-refined output will meet any particular quality standard.</li>
+    </ul>
+    <p>Always review generated descriptions before publishing them.</p>
+
+    <h3>7. Limitation of Liability</h3>
+    <p>To the maximum extent permitted by applicable law, the developer will not be liable for any direct, indirect, incidental, special, consequential, or similar damages arising from the use of, or inability to use, Git Helper. This includes, without limitation:</p>
+    <ul>
+      <li>inaccurate, incomplete, or misleading PR descriptions;</li>
+      <li>data sent to a third-party AI provider;</li>
+      <li>loss of PAT tokens, API keys, or license keys due to browser data deletion;</li>
+      <li>service interruptions from Azure DevOps or AI providers; or</li>
+      <li>any consequences of relying on generated output.</li>
+    </ul>
+    <p>Use of Git Helper is at your own risk.</p>
+
+    <h3>8. User Responsibilities</h3>
+    <p>By using Git Helper, you agree that:</p>
+    <ul>
+      <li>you are responsible for the Azure DevOps accounts and repositories you access;</li>
+      <li>you will only use the extension on repositories you are authorised to access;</li>
+      <li>you will review the permissions requested by the extension before granting them;</li>
+      <li>you will comply with Azure DevOps, Chrome Web Store, and your chosen AI provider's terms and acceptable-use policies;</li>
+      <li>you will not use the extension for unlawful, abusive, or unauthorised purposes; and</li>
+      <li>you are responsible for reviewing generated PR descriptions before publishing them.</li>
+    </ul>
+
+    <h3>9. Dependency on Third-Party Services</h3>
+    <p>Git Helper depends on the Azure DevOps REST API and, optionally, third-party AI provider APIs. The developer is not responsible for interruptions, changes, rate limits, or discontinued functionality in any of these services.</p>
+
+    <h3>10. Changes to These Terms</h3>
+    <p>The developer may update these Terms of Service at any time. Continued use of the extension after changes are posted constitutes acceptance of the revised terms. The "Last updated" date above will reflect any changes.</p>
+  </section>
+
+  <!-- SUPPORT -->
+  <section id="support" class="section">
+    <h2>Support</h2>
+
+    <h3>Getting help</h3>
+    <p>For setup and usage questions, see the <a href="#installation">Installation</a> section above — it covers building the extension, loading it in Chrome, and using the PR Description panel.</p>
+
+    <h3>Report an issue</h3>
+    <p>Found a bug or unexpected behaviour? Open an issue on GitHub:</p>
+    <p><a href="https://github.com/agaur2210/apps/issues" target="_blank">github.com/agaur2210/apps/issues</a></p>
+    <p>Please include:</p>
+    <ul>
+      <li>A description of what happened and what you expected</li>
+      <li>The Azure DevOps URL format (<code>dev.azure.com</code> or <code>*.visualstudio.com</code>)</li>
+      <li>Whether you are using a PAT token or session auth</li>
+      <li>Whether AI refinement is enabled</li>
+      <li>Any error messages shown in the panel or the browser console (<kbd>F12</kbd> → Console)</li>
+    </ul>
+
+    <h3>License key enquiries</h3>
+    <p>For questions about Pro license keys, contact: <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a></p>
+
+    <h3>Contact</h3>
+    <p>For other enquiries, email: <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a></p>
+  </section>
+
+</div>
+
+<footer>
+  <p>Git Helper for Azure DevOps &mdash; <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a> &mdash; <a href="https://github.com/agaur2210/apps/tree/main/azure-devops-git-helper">GitHub</a></p>
+</footer>
+
+</body>
+</html>

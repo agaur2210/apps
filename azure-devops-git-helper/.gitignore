@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.js.map
+.author-key
+*.zip
+# Compiled output
+.DS_Store

@@ -41,6 +41,22 @@ function onSaveSettings(e) {
     return notify_('Add at least 1 source calendar.', 'error');
   }
 
+  // Validate that each source calendar exists in the user's calendar list.
+  // This confirms the calendar is shared with the primary account before attempting sync.
+  for (let i = 1; i < calendars.length; i++) {
+    const calId = calendars[i];
+    if (!calId) continue;
+    try {
+      Calendar.CalendarList.get(calId);
+    } catch (err) {
+      return notify_(
+        'Calendar "' + calId + '" was not found in your calendar list. ' +
+        'Make sure it has been shared with your primary account before adding it here.',
+        'error'
+      );
+    }
+  }
+
   const pastRaw    = fi['pastDays']   && fi['pastDays'].stringInputs   && fi['pastDays'].stringInputs.value[0];
   const futureRaw  = fi['futureDays'] && fi['futureDays'].stringInputs && fi['futureDays'].stringInputs.value[0];
   const pastDays   = parseInt(pastRaw,   10);

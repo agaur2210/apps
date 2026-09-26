@@ -50,6 +50,7 @@
 <nav>
   <a href="#about">About</a>
   <a href="#setup">Setup Guide</a>
+  <a href="#scope-justification">Permissions</a>
   <a href="#support">Support</a>
   <a href="#privacy-policy">Privacy Policy</a>
   <a href="#terms-of-service">Terms of Service</a>
@@ -149,58 +150,111 @@
     </table>
   </section>
 
+  <!-- SCOPE JUSTIFICATION -->
+  <section id="scope-justification" class="section">
+    <h2>Permissions Requested and Why</h2>
+    <p>Calendar Sync requests only the minimum permissions required to provide its synchronization functionality. The following table explains each OAuth scope, the specific user-facing feature that requires it, and why a narrower scope would not be viable.</p>
+
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <thead>
+        <tr style="background:#f8f9fa;">
+          <th style="text-align:left;padding:10px 8px;border:1px solid #e0e0e0;">Scope</th>
+          <th style="text-align:left;padding:10px 8px;border:1px solid #e0e0e0;">User-facing feature</th>
+          <th style="text-align:left;padding:10px 8px;border:1px solid #e0e0e0;">Why narrower is not viable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">userinfo.email</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Pre-fills Calendar 1 (the primary calendar) with the signed-in account's email so the user does not have to type it manually and cannot accidentally set it to the wrong account.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">No narrower scope exists that provides the user's email address. Without it the add-on cannot identify which calendar is "primary."</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">calendar.calendarlist.readonly</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Validates that each source calendar the user enters in the setup form is already shared with their primary account before attempting sync. If the calendar is not in the user's calendar list, an error is shown immediately with instructions to share the calendar first.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">The <code>calendar.events</code> scope only permits reading event data and does not return calendar metadata (access role, display name) needed for validation. Without early validation, setup errors would only surface during the first sync run, hours later, with a less helpful error message.</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">calendar.events</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Reads events from source calendars to find busy periods, and creates, updates, and deletes the "Busy [domain]" mirror events on the primary calendar. This is the core sync functionality.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;"><code>calendar.events.readonly</code> is insufficient because the add-on must write and delete the mirror events it creates on the primary calendar. <code>calendar.freebusy</code> is insufficient because it does not provide event IDs needed to track and deduplicate mirrors, and does not support sync tokens.</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">calendar.addons.execute</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Required by Google for all Google Workspace Add-ons to execute card action callbacks (Save, Pause, Resume, Resync, Stop &amp; Clean Up). Without it, none of the add-on's UI buttons would function.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">This scope is mandated by Google's Workspace Add-on platform. There is no narrower alternative.</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">script.scriptapp</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">Creates and manages the hourly time-based trigger that automatically keeps calendars in sync without manual intervention. Also used to schedule the one-shot background trigger that runs sync operations after the user saves settings.</td>
+          <td style="padding:10px 8px;border:1px solid #e0e0e0;">No narrower scope exists for creating Apps Script triggers. Without it, the add-on cannot run automatically — the user would need to manually trigger every sync, which is not the intended user experience.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
   <!-- PRIVACY POLICY -->
   <section id="privacy-policy" class="section">
     <h2>Privacy Policy</h2>
-    <p class="meta">Last updated: September 22, 2026</p>
+    <p class="meta">Last updated: September 26, 2026</p>
 
     <h3>Overview</h3>
     <p>Calendar Sync is a free Google Workspace™ Add-on that helps users synchronize busy time across multiple Google Calendar™ accounts. The add-on creates generic "Busy" calendar blocks so that availability from one configured calendar can be reflected in another calendar without copying the details of the original event.</p>
-    <p>Calendar Sync's use of Google user data complies with the Google API Services User Data Policy, including the Limited Use requirements.</p>
 
-    <h3>Information We Access</h3>
-    <p>Calendar Sync accesses Google Calendar™ data only as required to provide its synchronization functionality.</p>
+    <div style="background:#e8f0fe;border-left:4px solid #1a73e8;padding:16px 20px;margin:16px 0;border-radius:0 8px 8px 0;">
+      <strong>Limited Use Compliance Statement</strong><br>
+      The use of raw or derived user data received from Google Workspace APIs (including Google Calendar™ APIs) by Calendar Sync will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank">Google API Services User Data Policy</a>, including the Limited Use requirements. User data is used solely to provide the calendar synchronization feature requested by the user and for no other purpose.
+    </div>
+
+    <h3>Data Accessed</h3>
+    <p>Calendar Sync accesses only the Google user data required to provide its synchronization functionality:</p>
     <ul>
-      <li>Calendar event timing information (start and end times) to determine when the user is busy.</li>
-      <li>Permission to create, update, and remove the "Busy" calendar events that it creates.</li>
-      <li>Your Google Account™ email address to identify the calendar account being configured.</li>
+      <li><strong>Google Account™ email address</strong> — to identify the primary calendar account and pre-fill it in the setup form.</li>
+      <li><strong>Calendar list metadata</strong> (calendar name and access role) — to validate that source calendars entered by the user are shared with the primary account before attempting sync.</li>
+      <li><strong>Calendar event timing data</strong> (start times, end times, status, recurrence rules, sync tokens) from source calendars — to determine when the user is busy.</li>
+      <li><strong>Extended property metadata</strong> on mirror events the add-on creates — to identify and track which events belong to Calendar Sync for deduplication and cleanup.</li>
     </ul>
-    <p>Calendar Sync does not use or store the titles, descriptions, attendee information, conference information, or locations of your existing calendar events.</p>
+    <p>Calendar Sync does not access, use, or store the titles, descriptions, attendee information, conference details, or locations of existing calendar events. Event content is never read or transmitted — only timing information is processed.</p>
 
-    <h3>How We Use Your Information</h3>
-    <p>Information obtained from Google Calendar™ is used solely to provide the calendar synchronization functionality requested by the user. Calendar information is used to determine busy periods and to create or remove corresponding "Busy" blocks in configured calendars.</p>
-    <p>Your information is not used for advertising, profiling, marketing, analytics, or any unrelated purpose.</p>
-
-    <h3>Data Storage</h3>
-    <p>Calendar Sync does not operate an external application server or database. Configuration information required by the add-on is stored using Google Apps Script™ User Properties and is associated with the individual Google Account™ using the add-on. Calendar event information is processed within Google's infrastructure and is not stored in an external database controlled by the developer. Calendar Sync does not maintain copies of users' calendar event content outside Google services.</p>
-
-    <h3>Data Sharing and Disclosure</h3>
+    <h3>How User Data Is Used</h3>
+    <p>User data obtained from Google APIs is used solely to provide the calendar synchronization functionality requested by the user:</p>
     <ul>
-      <li>Calendar Sync does not sell user data.</li>
-      <li>Calendar Sync does not share Google user data with advertisers, data brokers, analytics providers, or other third parties.</li>
-      <li>Calendar Sync does not transfer Google Calendar™ information to external servers or third-party services as part of its normal operation.</li>
-      <li>Human access to users' Google Calendar™ information is not provided as part of the service.</li>
+      <li>Email address: used only to identify the primary calendar, not stored separately.</li>
+      <li>Calendar metadata: used only at the moment of setup to validate calendar access; not stored.</li>
+      <li>Event timing data: used only to compute busy periods and create corresponding "Busy [domain]" blocks on the primary calendar.</li>
+    </ul>
+    <p>User data is not used for advertising, profiling, marketing, analytics, AI/ML model training, or any purpose unrelated to calendar synchronization.</p>
+
+    <h3>Data Sharing and Transfer</h3>
+    <ul>
+      <li>Calendar Sync does not sell Google user data.</li>
+      <li>Calendar Sync does not share Google user data with advertisers, data brokers, analytics providers, or any third parties.</li>
+      <li>Calendar Sync does not transfer Google Calendar™ data to any external server, database, or third-party service. All processing occurs within Google's own infrastructure (Google Apps Script™).</li>
+      <li>No human (including the developer) has access to users' Google Calendar™ data through Calendar Sync.</li>
+    </ul>
+
+    <h3>AI and Machine Learning</h3>
+    <p>Calendar Sync does not use artificial intelligence or machine learning systems of any kind. User data obtained from Google Workspace APIs is not used to develop, improve, or train any AI or machine learning model — whether operated by the developer or by any third party. No user data is transferred to any AI or machine learning service.</p>
+
+    <h3>Data Storage and Security</h3>
+    <p>Calendar Sync does not operate an external application server or database. The only data stored by the add-on is the user's own configuration (calendar email addresses, sync window settings, and sync state tokens), which is stored exclusively in Google Apps Script™ User Properties — a per-user, per-script storage mechanism provided by Google that is not accessible to other scripts or third parties.</p>
+    <p>Calendar event data is processed transiently within Google's Apps Script™ runtime. No calendar content is written to or cached in any external storage controlled by the developer.</p>
+    <p>Access to Google Calendar™ data is protected by Google's OAuth 2.0 authorization system. Users explicitly grant and can revoke permissions at any time via their Google Account™ security settings. The add-on requests only the minimum OAuth scopes necessary to function (see the <a href="#scope-justification">Permissions section</a>).</p>
+
+    <h3>Data Retention and Deletion</h3>
+    <p>Configuration data stored by Calendar Sync is retained only as long as the user keeps the add-on installed and configured.</p>
+    <ul>
+      <li>Users can remove all "Busy" calendar blocks created by Calendar Sync by opening the add-on and selecting <strong>Stop &amp; Clean Up</strong>.</li>
+      <li>Users can reset their configuration by using the <strong>Reconfigure</strong> option in the add-on.</li>
+      <li>Users can delete all stored configuration data and revoke Calendar Sync's access to their Google Account™ at any time via <a href="https://myaccount.google.com/permissions" target="_blank">Google Account™ → Security → Third-party apps with account access</a>.</li>
+      <li>No data associated with a user is retained by the developer after the user revokes access.</li>
     </ul>
 
     <h3>Third-Party Services</h3>
-    <p>Calendar Sync does not use third-party analytics, advertising, tracking, or data-processing services. The add-on operates using Google Workspace™, Google Calendar™ APIs, and Google Apps Script™ services.</p>
-
-    <h3>Data Retention and Deletion</h3>
-    <p>Configuration data is retained only as necessary to provide the Calendar Sync functionality.</p>
-    <ul>
-      <li>Users can remove calendar blocks created by Calendar Sync by opening the add-on and selecting "Remove all Busy blocks."</li>
-      <li>Users can clear or change their stored configuration through the "Reconfigure" option.</li>
-      <li>Users may also revoke Calendar Sync's access to their Google Account™ through their Google Account™ security settings.</li>
-    </ul>
+    <p>Calendar Sync does not use any third-party analytics, advertising, tracking, telemetry, or data-processing services. The add-on operates exclusively within Google's infrastructure using Google Workspace™, Google Calendar™ APIs, and Google Apps Script™.</p>
 
     <h3>Google API Services User Data Policy</h3>
-    <p>Calendar Sync's use and transfer of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements. Google user data is used only to provide the user-facing calendar synchronization functionality of Calendar Sync.</p>
-
-    <h3>Security</h3>
-    <p>Calendar Sync runs within Google Apps Script™ and Google's infrastructure. The add-on does not transmit Google Calendar™ information to an external developer-operated server. Access to Google Calendar™ data is controlled through Google's OAuth authorization system and the permissions granted by the user.</p>
-
-    <h3>Disclaimer</h3>
-    <p>Calendar Sync is provided "as is" without warranties of any kind, express or implied. While reasonable efforts are made to ensure that synchronization operates correctly, the developer does not guarantee uninterrupted or error-free operation. To the maximum extent permitted by applicable law, the developer is not responsible for loss of data, missed events, scheduling conflicts, calendar errors, service interruptions, or other damages resulting from the use or inability to use Calendar Sync.</p>
+    <p>Calendar Sync's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank">Google API Services User Data Policy</a>, including the Limited Use requirements. Google user data is used only to provide the user-facing calendar synchronization functionality of Calendar Sync.</p>
 
     <h3>Contact</h3>
     <p>For questions about this Privacy Policy or Calendar Sync's handling of user data, contact: <a href="mailto:lucamit@gmail.com">lucamit@gmail.com</a></p>

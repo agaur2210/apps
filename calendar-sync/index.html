@@ -178,17 +178,16 @@
           <td style="padding:10px 8px;border:1px solid #e0e0e0;font-family:monospace;font-size:0.85rem;">calendar.events</td>
           <td style="padding:10px 8px;border:1px solid #e0e0e0;">Reads events from source calendars to determine busy periods, and creates, updates, and deletes "Busy [domain]" mirror events on the primary calendar. This is the core sync functionality.</td>
           <td style="padding:10px 8px;border:1px solid #e0e0e0;">
-            <strong>Why <code>calendar.events.readonly</code> is insufficient:</strong> The add-on must write mirror events to the primary calendar (<code>Events.insert</code>), update them when source event times change (<code>Events.update</code>), and delete them when source events are cancelled or moved outside the sync window (<code>Events.remove</code>). Read-only scopes do not permit any of these write operations.<br><br>
-            <strong>Why <code>calendar.events.freebusy</code> is insufficient:</strong> The add-on reads the following specific fields from source events that <code>calendar.events.freebusy</code> does not return:
+            <strong>Write operations</strong> — the add-on creates, updates, and deletes mirror events on the primary calendar (<code>Events.insert</code>, <code>Events.update</code>, <code>Events.remove</code>). Neither <code>calendar.events.readonly</code> nor <code>calendar.events.freebusy</code> permits writes.<br><br>
+            <strong>Read fields not available under <code>calendar.events.freebusy</code>:</strong>
             <ul style="margin:8px 0 0 16px;">
-              <li><code>event.id</code> — used to key each mirror event to its source; not returned under <code>calendar.events.freebusy</code></li>
-              <li><code>event.extendedProperties</code> — used to identify which events on the primary calendar are mirrors created by Calendar Sync; not returned under <code>calendar.events.freebusy</code></li>
-              <li><code>event.recurrence</code> — used to copy recurrence rules to the mirror so a single recurring series produces one mirror; not returned under <code>calendar.events.freebusy</code></li>
-              <li><code>event.recurringEventId</code> — used to detect individual instances vs. master recurring events; not returned under <code>calendar.events.freebusy</code></li>
-              <li><code>event.status = "cancelled"</code> — used to detect deleted source events so their mirrors can be removed; cancelled events are not returned under <code>calendar.events.freebusy</code></li>
-              <li><code>syncToken</code> (incremental sync) — the <code>syncToken</code> parameter on <code>Events.list</code> is not supported under <code>calendar.events.freebusy</code>, making efficient incremental sync impossible</li>
+              <li><code>event.id</code> — keys each mirror to its source event</li>
+              <li><code>event.extendedProperties</code> — identifies which events are mirrors created by Calendar Sync</li>
+              <li><code>event.recurrence</code> — copies recurrence rules so one series produces one mirror</li>
+              <li><code>event.recurringEventId</code> — distinguishes instances from master events</li>
+              <li><code>event.status = "cancelled"</code> — detects deleted events so mirrors can be removed</li>
+              <li><code>syncToken</code> — enables incremental sync; not supported under <code>calendar.events.freebusy</code></li>
             </ul>
-            Additionally, <code>calendar.events.freebusy</code> is read-only and cannot be used for any of the required write operations listed above.
           </td>
         </tr>
         <tr>
